@@ -6,26 +6,26 @@ import { StatusBarService } from "./services/StatusBarService";
 let client: VetClient | undefined;
 
 export async function activate(context: ExtensionContext): Promise<void> {
-    const config = workspace.getConfiguration("vet");
+	const config = workspace.getConfiguration("vet");
 
-    if (!config.get<boolean>("enable", true)) {
-        return;
-    }
+	if (!config.get<boolean>("enable", true)) {
+		return;
+	}
 
-    const outputChannel = window.createOutputChannel("Vet");
-    const statusBar = new StatusBarService();
+	const outputChannel = window.createOutputChannel("Vet");
+	const statusBar = new StatusBarService();
 
-    client = new VetClient(context, outputChannel, statusBar);
+	client = new VetClient(context, outputChannel, statusBar);
 
-    context.subscriptions.push(
-        outputChannel,
-        statusBar,
-        createRestartCommand(client),
-    );
+	context.subscriptions.push(
+		outputChannel,
+		statusBar,
+		createRestartCommand(client),
+	);
 
-    await client.start();
+	await client.start();
 }
 
 export async function deactivate(): Promise<void> {
-    await client?.stop();
+	await client?.stop();
 }
