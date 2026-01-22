@@ -26,6 +26,22 @@ type = "PrepareRelease"
 
 [[workflows.steps]]
 type = "Command"
+command = "cargo generate-lockfile"
+
+[[workflows.steps]]
+type = "Command"
+command = "git add Cargo.lock"
+
+[[workflows.steps]]
+type = "Command"
+command = "npm install --package-lock-only --prefix editors/vscode"
+
+[[workflows.steps]]
+type = "Command"
+command = "git add editors/vscode/package-lock.json"
+
+[[workflows.steps]]
+type = "Command"
 command = "sed -i 's/## \\([0-9]*\\.[0-9]*\\.[0-9]*\\) ([0-9-]*)/## \\1/' CHANGELOG.md"
 
 [[workflows.steps]]
