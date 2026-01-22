@@ -11,10 +11,12 @@
 <p align="center">
   <a href="https://github.com/spikermint/vet/actions/workflows/ci.yml"><img src="https://github.com/spikermint/vet/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://github.com/spikermint/vet/releases"><img src="https://img.shields.io/github/v/release/spikermint/vet" alt="Release"></a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=vet.vet"><img src="https://img.shields.io/visual-studio-marketplace/v/vet.vet" alt="VS Code Marketplace"></a>
   <a href="https://github.com/spikermint/vet/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="Licence"></a>
 </p>
 
 <p align="center">
+  <a href="#vs-code-extension">VS Code</a> •
   <a href="#installation">Installation</a> •
   <a href="#quick-start">Quick Start</a> •
   <a href="#cli-reference">CLI Reference</a> •
@@ -34,6 +36,15 @@
 - **Git-aware** — Respects `.gitignore` and can scan staged changes only
 - **Multiple formats** — Output as text, JSON, or SARIF
 - **Pre-commit hooks** — Catch secrets before they're committed
+
+## VS Code Extension
+
+Install the [Vet extension](https://marketplace.visualstudio.com/items?itemName=vet.vet) for real-time secret detection in your editor.
+
+- Search for "Vet" in the Extensions view (`Cmd+Shift+X`)
+- Or install from the [Visual Studio Code Marketplace](https://marketplace.visualstudio.com/items?itemName=vet.vet)
+
+The extension highlights secrets as you type and respects your `.gitignore` and `.vet.toml` configuration.
 
 ## Installation
 

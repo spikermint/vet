@@ -1,5 +1,5 @@
 [package]
-versioned_files = ["Cargo.toml"]
+versioned_files = ["Cargo.toml", "editors/vscode/package.json"]
 changelog = "CHANGELOG.md"
 extra_changelog_sections = [
     { name = "Minor Changes", types = [
