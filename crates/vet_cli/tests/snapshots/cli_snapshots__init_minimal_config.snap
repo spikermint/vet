@@ -1,0 +1,6 @@
+---
+source: crates/vet_cli/tests/cli_snapshots.rs
+expression: config
+---
+severity = "low"
+max_file_size = 1048576

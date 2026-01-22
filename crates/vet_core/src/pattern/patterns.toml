@@ -1,0 +1,1156 @@
+[groups.ai]
+name = "AI Services"
+remediation = "Revoke key in provider dashboard, review usage logs for unauthorised API calls."
+
+[groups.auth]
+name = "Authentication Tokens"
+remediation = "Invalidate token, review access logs for unauthorised usage."
+
+[groups.aws]
+name = "Amazon Web Services"
+remediation = "Rotate in IAM console immediately, review CloudTrail for unauthorised access."
+
+[groups.azure]
+name = "Microsoft Azure"
+remediation = "Revoke in Azure Portal, review Activity Logs for unauthorised access."
+
+[groups.cloud]
+name = "Cloud Platforms"
+remediation = "Revoke token in provider console, review for unauthorised resource access."
+
+[groups.comms]
+name = "Communication Platforms"
+remediation = "Revoke in app settings, review message logs for unauthorised activity."
+
+[groups.database]
+name = "Database Credentials"
+remediation = "Rotate password immediately, review access logs for unauthorised queries."
+
+[groups.email]
+name = "Email Services"
+remediation = "Revoke API key, review sending logs for unauthorised emails."
+
+[groups.gcp]
+name = "Google Cloud Platform"
+remediation = "Delete in GCP Console, review Cloud Audit Logs for unauthorised access."
+
+[groups.infra]
+name = "Infrastructure Tools"
+remediation = "Revoke token, review audit logs for unauthorised infrastructure changes."
+
+[groups.keys]
+name = "Private Keys & Certificates"
+remediation = "Revoke or rotate the key immediately, generate new key pair."
+
+[groups.payments]
+name = "Payment Processors"
+remediation = "Roll API key immediately, review transaction logs for unauthorised charges."
+
+[groups.registry]
+name = "Package & Container Registries"
+remediation = "Revoke token, audit published packages for unauthorised versions."
+
+[groups.vcs]
+name = "Version Control Systems"
+remediation = "Revoke token immediately, review audit logs for unauthorised commits."
+
+# =============================================================================
+# AI Services
+# =============================================================================
+
+[[patterns]]
+id = "ai/anthropic-api-key"
+group = "ai"
+name = "Anthropic API Key"
+description = "Anthropic API key (sk-ant-api03- prefix). Grants access to Claude models with billing."
+severity = "critical"
+default_enabled = true
+min_entropy = 4.0
+regex = '''\b(sk-ant-api03-[a-zA-Z0-9_-]{80,110})\b'''
+keywords = ["sk-ant-"]
+
+[[patterns]]
+id = "ai/groq-api-key"
+group = "ai"
+name = "Groq API Key"
+description = "Groq API key (gsk_ prefix). Grants access to Groq's fast LPU inference API."
+severity = "critical"
+default_enabled = true
+min_entropy = 4.0
+regex = '''\b(gsk_[a-zA-Z0-9]{48})\b'''
+keywords = ["gsk_"]
+
+[[patterns]]
+id = "ai/huggingface-token"
+group = "ai"
+name = "Hugging Face Access Token"
+description = "Hugging Face token (hf_ prefix). Grants access to models, datasets, and Inference API."
+severity = "high"
+default_enabled = true
+min_entropy = 3.5
+regex = '''\b(hf_[a-zA-Z0-9]{20,})\b'''
+keywords = ["hf_"]
+
+[[patterns]]
+id = "ai/openai-admin-key"
+group = "ai"
+name = "OpenAI Admin API Key"
+description = "OpenAI admin API key (sk-admin- prefix). Grants administrative access to organisation."
+severity = "critical"
+default_enabled = true
+min_entropy = 4.0
+regex = '''\b(sk-admin-[a-zA-Z0-9_-]{20,})\b'''
+keywords = ["sk-admin-"]
+
+[[patterns]]
+id = "ai/openai-api-key"
+group = "ai"
+name = "OpenAI Project API Key"
+description = "OpenAI project API key (sk-proj- prefix). Grants access to OpenAI models with billing."
+severity = "critical"
+default_enabled = true
+min_entropy = 4.0
+regex = '''\b(sk-proj-[a-zA-Z0-9_-]{48,160})\b'''
+keywords = ["sk-proj-"]
+
+# =============================================================================
+# Authentication Tokens
+# =============================================================================
+
+[[patterns]]
+id = "auth/basic-auth-header"
+group = "auth"
+name = "Basic Auth in Authorization Header"
+description = "HTTP Basic Auth header with base64-encoded credentials. Easily decoded."
+severity = "high"
+default_enabled = true
+min_entropy = 3.0
+regex = '''(?i)Authorization[\s]*[=:][\s]*["']?Basic\s+([A-Za-z0-9+/]{15,}={0,2})["']?'''
+keywords = ["Authorization", "Basic"]
+
+[[patterns]]
+id = "auth/bearer-token"
+group = "auth"
+name = "Bearer Token in Authorization Header"
+description = "Bearer token in HTTP Authorization header. Grants API access."
+severity = "high"
+default_enabled = true
+min_entropy = 3.5
+regex = '''(?i)Authorization[\s]*[=:][\s]*["']?Bearer\s+([A-Za-z0-9_-]{20,})["']?'''
+keywords = ["Authorization"]
+
+[[patterns]]
+id = "auth/jwt-token"
+group = "auth"
+name = "JSON Web Token (JWT)"
+description = "JWT token with encoded claims and signature. May contain sensitive session data."
+severity = "medium"
+default_enabled = true
+min_entropy = 3.5
+regex = '''\b(eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,})\b'''
+keywords = ["eyJ"]
+
+# =============================================================================
+# Amazon Web Services
+# =============================================================================
+
+[[patterns]]
+id = "aws/access-key-id"
+group = "aws"
+name = "AWS Access Key ID"
+description = "AWS access key ID (AKIA/ASIA/ABIA/ACCA prefix). Identifies the key pair but requires the secret key for access."
+severity = "high"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b((AKIA|ASIA|ABIA|ACCA)[A-Z2-7]{16})\b'''
+keywords = ["AKIA", "ASIA", "ABIA", "ACCA"]
+
+[[patterns]]
+id = "aws/appsync-api-key"
+group = "aws"
+name = "AWS AppSync API Key"
+description = "AWS AppSync GraphQL API key. Grants access to GraphQL APIs and underlying data sources."
+severity = "high"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(da2-[a-z0-9]{26})\b'''
+keywords = ["da2-"]
+
+[[patterns]]
+id = "aws/bedrock-api-key"
+group = "aws"
+name = "AWS Bedrock API Key"
+description = "Long-lived API key for Amazon Bedrock AI services. Grants access to AI model invocations."
+severity = "critical"
+default_enabled = true
+min_entropy = 4.0
+regex = '''\b(ABSK[A-Za-z0-9+/]{109,269}={0,2})\b'''
+keywords = ["ABSK"]
+
+# =============================================================================
+# Microsoft Azure
+# =============================================================================
+
+[[patterns]]
+id = "azure/app-insights-instrumentation-key"
+group = "azure"
+name = "Azure Application Insights Instrumentation Key"
+description = "Application Insights instrumentation key. Low risk but could allow false telemetry injection."
+severity = "low"
+default_enabled = true
+min_entropy = 3.0
+regex = '''InstrumentationKey=([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})'''
+keywords = ["InstrumentationKey"]
+
+[[patterns]]
+id = "azure/service-bus-key"
+group = "azure"
+name = "Azure Service Bus Shared Access Key"
+description = "Azure Service Bus or Event Hub key. Grants send/receive access to messaging namespace."
+severity = "critical"
+default_enabled = true
+min_entropy = 4.0
+regex = '''SharedAccessKey=([A-Za-z0-9+/]{43}=)'''
+keywords = ["SharedAccessKey"]
+
+[[patterns]]
+id = "azure/storage-account-key"
+group = "azure"
+name = "Azure Storage Account Key"
+description = "Azure Storage account key (512-bit, base64). Grants full read/write/delete access to storage account."
+severity = "critical"
+default_enabled = true
+min_entropy = 4.5
+regex = '''AccountKey=([A-Za-z0-9+/]{86}==)'''
+keywords = ["AccountKey"]
+
+[[patterns]]
+id = "azure/storage-sas-token"
+group = "azure"
+name = "Azure Storage SAS Token"
+description = "Azure SAS token with delegated storage access. Permissions depend on token configuration."
+severity = "high"
+default_enabled = true
+min_entropy = 4.0
+regex = '''[?&]sig=([A-Za-z0-9%+/]+={0,2})'''
+keywords = ["sig="]
+
+# =============================================================================
+# Cloud Platforms
+# =============================================================================
+
+[[patterns]]
+id = "cloud/digitalocean-oauth-token"
+group = "cloud"
+name = "DigitalOcean OAuth Token"
+description = "DigitalOcean OAuth token. Grants scoped API access via OAuth flow."
+severity = "critical"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(doo_v1_[a-f0-9]{64})\b'''
+keywords = ["doo_v1_"]
+
+[[patterns]]
+id = "cloud/digitalocean-pat"
+group = "cloud"
+name = "DigitalOcean Personal Access Token"
+description = "DigitalOcean PAT. Grants full API access to manage cloud resources."
+severity = "critical"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(dop_v1_[a-f0-9]{64})\b'''
+keywords = ["dop_v1_"]
+
+[[patterns]]
+id = "cloud/digitalocean-refresh-token"
+group = "cloud"
+name = "DigitalOcean OAuth Refresh Token"
+description = "DigitalOcean refresh token. Can be exchanged for new access tokens."
+severity = "high"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(dor_v1_[a-f0-9]{64})\b'''
+keywords = ["dor_v1_"]
+
+[[patterns]]
+id = "cloud/netlify-personal-access-token"
+group = "cloud"
+name = "Netlify Personal Access Token"
+description = "Netlify PAT (nfp_ prefix). Grants full API access to deploy sites and manage account."
+severity = "critical"
+default_enabled = true
+min_entropy = 3.5
+regex = '''\b(nfp_[a-zA-Z0-9]{36,40})\b'''
+keywords = ["nfp_"]
+
+[[patterns]]
+id = "cloud/supabase-access-token"
+group = "cloud"
+name = "Supabase Access Token"
+description = "Supabase personal access token (sbp_ prefix). Grants Management API access to projects."
+severity = "critical"
+default_enabled = true
+min_entropy = 3.5
+regex = '''\b(sbp_[a-f0-9]{40})\b'''
+keywords = ["sbp_"]
+
+[[patterns]]
+id = "cloud/supabase-secret-key"
+group = "cloud"
+name = "Supabase Secret Key"
+description = "Supabase secret API key (sb_secret_ prefix). Grants privileged database access, bypasses RLS."
+severity = "critical"
+default_enabled = true
+min_entropy = 3.5
+regex = '''\b(sb_secret_[a-zA-Z0-9_-]{20,})\b'''
+keywords = ["sb_secret_"]
+
+# =============================================================================
+# Communication Platforms
+# =============================================================================
+
+[[patterns]]
+id = "comms/slack-app-token"
+group = "comms"
+name = "Slack App-Level Token"
+description = "Slack app token (xoxa-). Used for Socket Mode and app-level APIs."
+severity = "high"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(xoxa-[0-9]+-[a-zA-Z0-9-]+)\b'''
+keywords = ["xoxa-"]
+
+[[patterns]]
+id = "comms/slack-bot-token"
+group = "comms"
+name = "Slack Bot Token"
+description = "Slack bot token (xoxb-). Allows posting messages and interacting with workspace."
+severity = "critical"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(xoxb-[0-9]{10,13}-[0-9]{10,13}-[a-zA-Z0-9]{24})\b'''
+keywords = ["xoxb-"]
+
+[[patterns]]
+id = "comms/slack-config-token"
+group = "comms"
+name = "Slack Configuration Token"
+description = "Slack config token (xoxe-). Used for app manifest and configuration APIs."
+severity = "high"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(xoxe\.xoxp-[0-9]+-[a-zA-Z0-9-]+)\b'''
+keywords = ["xoxe."]
+
+[[patterns]]
+id = "comms/slack-legacy-token"
+group = "comms"
+name = "Slack Legacy Token"
+description = "Slack legacy token (xoxs-). Deprecated but functional with broad workspace access."
+severity = "critical"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(xoxs-[0-9]+-[a-zA-Z0-9-]+)\b'''
+keywords = ["xoxs-"]
+
+[[patterns]]
+id = "comms/slack-refresh-token"
+group = "comms"
+name = "Slack Refresh Token"
+description = "Slack refresh token (xoxr-). Long-lived token to obtain new access tokens."
+severity = "critical"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(xoxr-[0-9]+-[a-zA-Z0-9-]+)\b'''
+keywords = ["xoxr-"]
+
+[[patterns]]
+id = "comms/slack-user-token"
+group = "comms"
+name = "Slack User Token"
+description = "Slack user token (xoxp-). Grants access on behalf of user including private channels."
+severity = "critical"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(xoxp-[0-9]{10,13}-[0-9]{10,13}-[0-9]{10,13}-[a-f0-9]{32})\b'''
+keywords = ["xoxp-"]
+
+[[patterns]]
+id = "comms/slack-webhook"
+group = "comms"
+name = "Slack Incoming Webhook URL"
+description = "Slack webhook URL. Can be abused to send phishing messages to channels."
+severity = "medium"
+default_enabled = true
+min_entropy = 2.5
+regex = '''(https://hooks\.slack\.com/services/T[A-Z0-9]{8,12}/B[A-Z0-9]{8,12}/[a-zA-Z0-9]{24})'''
+keywords = ["hooks.slack.com"]
+
+[[patterns]]
+id = "comms/twilio-account-sid"
+group = "comms"
+name = "Twilio Account SID"
+description = "Twilio account SID. Not secret alone but often leaked with auth token."
+severity = "medium"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(AC[0-9a-fA-F]{32})\b'''
+keywords = ["AC", "twilio", "TWILIO"]
+
+[[patterns]]
+id = "comms/twilio-api-key"
+group = "comms"
+name = "Twilio API Key SID"
+description = "Twilio API key SID. Grants access to send SMS, make calls, and use Twilio services."
+severity = "critical"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(SK[0-9a-fA-F]{32})\b'''
+keywords = ["SK", "twilio", "TWILIO"]
+
+# =============================================================================
+# Database Credentials
+# =============================================================================
+
+[[patterns]]
+id = "database/jdbc-uri"
+group = "database"
+name = "JDBC Connection String"
+description = "JDBC URI with credentials. May access MySQL, PostgreSQL, Oracle, or SQL Server."
+severity = "critical"
+default_enabled = true
+min_entropy = 3.0
+regex = '''(jdbc:[a-z0-9+]+://[^:]+:[^@]+@[^/\s"']+)'''
+keywords = ["jdbc:"]
+
+[[patterns]]
+id = "database/mongodb-uri"
+group = "database"
+name = "MongoDB Connection String"
+description = "MongoDB URI with credentials. Grants full database read/write access."
+severity = "critical"
+default_enabled = true
+min_entropy = 3.0
+regex = '''(mongodb(?:\+srv)?://[^:]+:[^@]+@[^/\s"']+)'''
+keywords = ["mongodb://", "mongodb+srv://"]
+
+[[patterns]]
+id = "database/mssql-uri"
+group = "database"
+name = "SQL Server Connection String"
+description = "SQL Server URI with credentials. Grants database access to SQL Server instances."
+severity = "critical"
+default_enabled = true
+min_entropy = 3.0
+regex = '''(sqlserver://[^:]+:[^@]+@[^/\s"']+)'''
+keywords = ["sqlserver://"]
+
+[[patterns]]
+id = "database/mysql-uri"
+group = "database"
+name = "MySQL Connection String"
+description = "MySQL URI with credentials. Grants database access for queries and administration."
+severity = "critical"
+default_enabled = true
+min_entropy = 3.0
+regex = '''(mysql://[^:]+:[^@]+@[^/\s"']+)'''
+keywords = ["mysql://"]
+
+[[patterns]]
+id = "database/postgres-uri"
+group = "database"
+name = "PostgreSQL Connection String"
+description = "PostgreSQL URI with credentials. Grants database access for queries and schema changes."
+severity = "critical"
+default_enabled = true
+min_entropy = 3.0
+regex = '''(postgres(?:ql)?://[^:]+:[^@]+@[^/\s"']+)'''
+keywords = ["postgresql://", "postgres://"]
+
+[[patterns]]
+id = "database/redis-uri"
+group = "database"
+name = "Redis Connection String"
+description = "Redis URI with credentials. Grants access to cache data and session state."
+severity = "critical"
+default_enabled = true
+min_entropy = 3.0
+regex = '''(rediss?://[^:]+:[^@]+@[^/\s"']+)'''
+keywords = ["redis://", "rediss://"]
+
+# =============================================================================
+# Email Services
+# =============================================================================
+
+[[patterns]]
+id = "email/mailgun-api-key"
+group = "email"
+name = "Mailgun Private API Key"
+description = "Mailgun private API key. Grants full access to send emails and manage domains."
+severity = "critical"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(key-[a-f0-9]{32})\b'''
+keywords = ["mailgun", "MAILGUN_API"]
+
+[[patterns]]
+id = "email/mailgun-validation-key"
+group = "email"
+name = "Mailgun Public Validation Key"
+description = "Mailgun validation key. Lower risk but enables email verification API access."
+severity = "medium"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(pubkey-[a-f0-9]{32})\b'''
+keywords = ["pubkey-"]
+
+[[patterns]]
+id = "email/sendgrid-api-key"
+group = "email"
+name = "SendGrid API Key"
+description = "SendGrid API key (SG. prefix). Can send emails and manage email infrastructure."
+severity = "critical"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(SG\.[a-zA-Z0-9_-]{20,24}\.[a-zA-Z0-9_-]{40,50})\b'''
+keywords = ["SG."]
+
+# =============================================================================
+# Google Cloud Platform
+# =============================================================================
+
+[[patterns]]
+id = "gcp/api-key"
+group = "gcp"
+name = "GCP API Key"
+description = "Google Cloud API key (AIza prefix). Can access Google APIs and incur billing charges."
+severity = "high"
+default_enabled = true
+min_entropy = 3.5
+regex = '''\b(AIza[A-Za-z0-9_-]{35})\b'''
+keywords = ["AIza"]
+
+[[patterns]]
+id = "gcp/oauth-client-secret"
+group = "gcp"
+name = "Google OAuth Client Secret"
+description = "Google OAuth 2.0 client secret (GOCSPX prefix). Allows impersonating OAuth client for user tokens."
+severity = "high"
+default_enabled = true
+min_entropy = 4.0
+regex = '''\b(GOCSPX-[A-Za-z0-9_-]{20,40})\b'''
+keywords = ["GOCSPX-"]
+
+[[patterns]]
+id = "gcp/service-account-key"
+group = "gcp"
+name = "GCP Service Account Key"
+description = "GCP service account private key in JSON. Grants full access to resources the account can reach."
+severity = "critical"
+default_enabled = true
+min_entropy = 4.0
+regex = '''"private_key"\s*:\s*"(-----BEGIN (?:RSA )?PRIVATE KEY-----\\n[A-Za-z0-9+/=\\n]+-----END (?:RSA )?PRIVATE KEY-----(?:\\n)?)"'''
+keywords = ["private_key", "BEGIN PRIVATE KEY", "service_account"]
+
+# =============================================================================
+# Infrastructure Tools
+# =============================================================================
+
+[[patterns]]
+id = "infra/terraform-cloud-token"
+group = "infra"
+name = "Terraform Cloud API Token"
+description = "Terraform Cloud/Enterprise token. Grants access to infrastructure state and workspaces."
+severity = "critical"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b([a-zA-Z0-9]{14,16}\.atlasv1\.[a-zA-Z0-9]{60,70})\b'''
+keywords = [".atlasv1."]
+
+[[patterns]]
+id = "infra/vault-batch-token"
+group = "infra"
+name = "HashiCorp Vault Batch Token"
+description = "Vault batch token (hvb. prefix). Lightweight token for high-volume operations."
+severity = "high"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(hvb\.[a-zA-Z0-9_-]{24,})\b'''
+keywords = ["hvb."]
+
+[[patterns]]
+id = "infra/vault-service-token"
+group = "infra"
+name = "HashiCorp Vault Service Token"
+description = "Vault service token (hvs. prefix). Grants access to secrets and encryption keys."
+severity = "critical"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(hvs\.[a-zA-Z0-9_-]{24,})\b'''
+keywords = ["hvs."]
+
+# =============================================================================
+# Private Keys & Certificates
+# =============================================================================
+
+[[patterns]]
+id = "keys/dsa-private-key"
+group = "keys"
+name = "DSA Private Key"
+description = "DSA private key in PEM format. Legacy key type for digital signatures."
+severity = "critical"
+default_enabled = true
+min_entropy = 4.0
+regex = '''-----BEGIN DSA PRIVATE KEY-----[\s\S]{64,}?-----END DSA PRIVATE KEY-----'''
+keywords = ["BEGIN DSA PRIVATE KEY"]
+
+[[patterns]]
+id = "keys/ec-private-key"
+group = "keys"
+name = "EC Private Key"
+description = "Elliptic curve private key in PEM format. Used for TLS, SSH, and signing."
+severity = "critical"
+default_enabled = true
+min_entropy = 4.0
+regex = '''-----BEGIN EC PRIVATE KEY-----[\s\S]{64,}?-----END EC PRIVATE KEY-----'''
+keywords = ["BEGIN EC PRIVATE KEY"]
+
+[[patterns]]
+id = "keys/encrypted-private-key"
+group = "keys"
+name = "Encrypted Private Key"
+description = "Password-protected private key. Still risky if password is weak or leaked."
+severity = "high"
+default_enabled = true
+min_entropy = 4.0
+regex = '''-----BEGIN ENCRYPTED PRIVATE KEY-----[\s\S]{64,}?-----END ENCRYPTED PRIVATE KEY-----'''
+keywords = ["BEGIN ENCRYPTED PRIVATE KEY"]
+
+[[patterns]]
+id = "keys/openssh-private-key"
+group = "keys"
+name = "OpenSSH Private Key"
+description = "OpenSSH private key (new format). Used for SSH authentication."
+severity = "critical"
+default_enabled = true
+min_entropy = 4.0
+regex = '''-----BEGIN OPENSSH PRIVATE KEY-----[\s\S]{64,}?-----END OPENSSH PRIVATE KEY-----'''
+keywords = ["BEGIN OPENSSH PRIVATE KEY"]
+
+[[patterns]]
+id = "keys/pgp-private-key"
+group = "keys"
+name = "PGP Private Key Block"
+description = "PGP/GPG private key. Used for email encryption and file signing."
+severity = "critical"
+default_enabled = true
+min_entropy = 4.0
+regex = '''-----BEGIN PGP PRIVATE KEY BLOCK-----[\s\S]{64,}?-----END PGP PRIVATE KEY BLOCK-----'''
+keywords = ["BEGIN PGP PRIVATE KEY BLOCK"]
+
+[[patterns]]
+id = "keys/private-key-pkcs8"
+group = "keys"
+name = "PKCS#8 Private Key"
+description = "Generic private key in PKCS#8 format. May contain RSA, EC, or other key types."
+severity = "critical"
+default_enabled = true
+min_entropy = 4.0
+regex = '''-----BEGIN PRIVATE KEY-----[\s\S]{64,}?-----END PRIVATE KEY-----'''
+keywords = ["BEGIN PRIVATE KEY"]
+
+[[patterns]]
+id = "keys/putty-private-key"
+group = "keys"
+name = "PuTTY Private Key"
+description = "PuTTY private key (PPK format). Used for SSH authentication on Windows."
+severity = "critical"
+default_enabled = true
+min_entropy = 4.0
+regex = '''PuTTY-User-Key-File-[0-9]+:[\s\S]{40,}?Private-Lines:'''
+keywords = ["PuTTY-User-Key-File"]
+
+[[patterns]]
+id = "keys/rsa-private-key"
+group = "keys"
+name = "RSA Private Key"
+description = "RSA private key in PEM format. Enables decryption, signing, and system impersonation."
+severity = "critical"
+default_enabled = true
+min_entropy = 4.0
+regex = '''-----BEGIN RSA PRIVATE KEY-----[\s\S]{64,}?-----END RSA PRIVATE KEY-----'''
+keywords = ["BEGIN RSA PRIVATE KEY"]
+
+[[patterns]]
+id = "keys/x509-certificate-private-key"
+group = "keys"
+name = "Certificate with Private Key (PFX/P12)"
+description = "Base64-encoded PKCS#12 file. Contains certificate and private key together."
+severity = "critical"
+default_enabled = true
+min_entropy = 4.5
+regex = '''(?i)(?:\.pfx|\.p12|pkcs12|certificate)[\s\S]{0,50}?[=:]\s*["']?([A-Za-z0-9+/]{100,}={0,2})["']?'''
+keywords = [".pfx", ".p12", "pkcs12"]
+
+# =============================================================================
+# Payment Processors
+# =============================================================================
+
+[[patterns]]
+id = "payments/braintree-access-token"
+group = "payments"
+name = "Braintree Access Token"
+description = "Braintree access token. Grants access to payment processing APIs."
+severity = "critical"
+default_enabled = true
+min_entropy = 4.0
+regex = '''\b(access_token\$(?:production|sandbox)\$[a-z0-9]{16}\$[a-f0-9]{32})\b'''
+keywords = ["access_token$"]
+
+[[patterns]]
+id = "payments/braintree-api-key"
+group = "payments"
+name = "Braintree Private Key"
+description = "Braintree merchant private key. Used with public key for API authentication."
+severity = "critical"
+default_enabled = true
+min_entropy = 3.5
+regex = '''(?i)braintree[^\n]{0,40}private[\s_-]*key[\s]*[=:]["']?\s*([a-f0-9]{32})["']?'''
+keywords = ["braintree"]
+
+[[patterns]]
+id = "payments/paypal-access-token"
+group = "payments"
+name = "PayPal Access Token"
+description = "PayPal OAuth access token (A21AA prefix). Short-lived token for API authentication."
+severity = "high"
+default_enabled = true
+min_entropy = 4.0
+regex = '''\b(A21AA[A-Za-z0-9_-]{50,100})\b'''
+keywords = ["A21AA"]
+
+[[patterns]]
+id = "payments/paypal-client-secret"
+group = "payments"
+name = "PayPal Client Secret"
+description = "PayPal REST API client secret. Grants access to process payments and refunds."
+severity = "critical"
+default_enabled = true
+min_entropy = 4.0
+regex = '''(?i)(?:paypal|pp)[\s_-]*(?:client)?[\s_-]*secret[\s]*[=:]["']?\s*([A-Za-z0-9_-]{40,80})["']?'''
+keywords = ["paypal", "PAYPAL"]
+
+[[patterns]]
+id = "payments/razorpay-live-key"
+group = "payments"
+name = "Razorpay Live API Key"
+description = "Razorpay live API key. Enables real payment collection in production."
+severity = "critical"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(rzp_live_[a-zA-Z0-9]{14,20})\b'''
+keywords = ["rzp_live_"]
+
+[[patterns]]
+id = "payments/razorpay-test-key"
+group = "payments"
+name = "Razorpay Test API Key"
+description = "Razorpay test API key. No real money but exposes test account configuration."
+severity = "low"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(rzp_test_[a-zA-Z0-9]{14,20})\b'''
+keywords = ["rzp_test_"]
+
+[[patterns]]
+id = "payments/shopify-access-token"
+group = "payments"
+name = "Shopify Access Token"
+description = "Shopify public app access token. Grants API access to store data and configuration."
+severity = "critical"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(shpat_[a-fA-F0-9]{32,64})\b'''
+keywords = ["shpat_"]
+
+[[patterns]]
+id = "payments/shopify-custom-app-token"
+group = "payments"
+name = "Shopify Custom App Access Token"
+description = "Shopify custom app token. Full API access to the specific store."
+severity = "critical"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(shpca_[a-fA-F0-9]{32,64})\b'''
+keywords = ["shpca_"]
+
+[[patterns]]
+id = "payments/shopify-private-app-token"
+group = "payments"
+name = "Shopify Private App Access Token"
+description = "Shopify private app token (legacy). Deprecated but still functional."
+severity = "critical"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(shppa_[a-fA-F0-9]{32,64})\b'''
+keywords = ["shppa_"]
+
+[[patterns]]
+id = "payments/shopify-shared-secret"
+group = "payments"
+name = "Shopify App Shared Secret"
+description = "Shopify app shared secret. Used for webhook verification and OAuth authentication."
+severity = "high"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(shpss_[a-fA-F0-9]{32,64})\b'''
+keywords = ["shpss_"]
+
+[[patterns]]
+id = "payments/square-access-token"
+group = "payments"
+name = "Square Access Token"
+description = "Square API access token. Grants access to payment, inventory, and customer APIs."
+severity = "critical"
+default_enabled = true
+min_entropy = 4.0
+regex = '''\b((?:EAAA[a-zA-Z0-9_-]{40,80}|sq0atp-[a-zA-Z0-9_-]{22,60}))\b'''
+keywords = ["EAAA", "sq0atp-"]
+
+[[patterns]]
+id = "payments/square-application-secret"
+group = "payments"
+name = "Square Application Secret"
+description = "Square application secret. Used for OAuth flows to obtain access tokens."
+severity = "critical"
+default_enabled = true
+min_entropy = 4.0
+regex = '''\b(sq0csp-[a-zA-Z0-9_-]{40,50})\b'''
+keywords = ["sq0csp-"]
+
+[[patterns]]
+id = "payments/stripe-live-restricted-key"
+group = "payments"
+name = "Stripe Live Restricted API Key"
+description = "Stripe live restricted key. Scoped production access based on key permissions."
+severity = "critical"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(rk_live_[a-zA-Z0-9]{10,99})\b'''
+keywords = ["rk_live_"]
+
+[[patterns]]
+id = "payments/stripe-live-secret-key"
+group = "payments"
+name = "Stripe Live Secret Key"
+description = "Stripe live secret key. Grants full API access to production payment processing."
+severity = "critical"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(sk_live_[a-zA-Z0-9]{10,99})\b'''
+keywords = ["sk_live_"]
+
+[[patterns]]
+id = "payments/stripe-test-restricted-key"
+group = "payments"
+name = "Stripe Test Restricted API Key"
+description = "Stripe test restricted key. Scoped test mode access."
+severity = "low"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(rk_test_[a-zA-Z0-9]{10,99})\b'''
+keywords = ["rk_test_"]
+
+[[patterns]]
+id = "payments/stripe-test-secret-key"
+group = "payments"
+name = "Stripe Test Secret Key"
+description = "Stripe test secret key. No real money but exposes test data and configuration."
+severity = "low"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(sk_test_[a-zA-Z0-9]{10,99})\b'''
+keywords = ["sk_test_"]
+
+[[patterns]]
+id = "payments/stripe-webhook-secret"
+group = "payments"
+name = "Stripe Webhook Signing Secret"
+description = "Stripe webhook secret. Compromise allows forging webhook events to your application."
+severity = "high"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(whsec_[a-zA-Z0-9]{24,64})\b'''
+keywords = ["whsec_"]
+
+# =============================================================================
+# Package & Container Registries
+# =============================================================================
+
+[[patterns]]
+id = "registry/docker-hub-pat"
+group = "registry"
+name = "Docker Hub Personal Access Token"
+description = "Docker Hub PAT (dckr_pat_ prefix). Grants push/pull access to container images."
+severity = "high"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(dckr_pat_[a-zA-Z0-9_-]{20,60})\b'''
+keywords = ["dckr_pat_"]
+
+[[patterns]]
+id = "registry/npm-access-token"
+group = "registry"
+name = "npm Access Token"
+description = "npm access token (npm_ prefix). Grants publish access to npm packages. Supply chain risk."
+severity = "critical"
+default_enabled = true
+min_entropy = 3.5
+regex = '''\b(npm_[A-Za-z0-9]{36,40})\b'''
+keywords = ["npm_"]
+
+[[patterns]]
+id = "registry/pypi-api-token"
+group = "registry"
+name = "PyPI API Token"
+description = "PyPI API token (pypi- prefix). Grants publish access to Python packages. Supply chain risk."
+severity = "critical"
+default_enabled = true
+min_entropy = 4.0
+regex = '''\b(pypi-[A-Za-z0-9_-]{50,})\b'''
+keywords = ["pypi-"]
+
+[[patterns]]
+id = "registry/rubygems-api-key"
+group = "registry"
+name = "RubyGems API Key"
+description = "RubyGems API key (rubygems_ prefix). Grants publish access to Ruby gems. Supply chain risk."
+severity = "critical"
+default_enabled = true
+min_entropy = 3.5
+regex = '''\b(rubygems_[a-fA-F0-9]{48})\b'''
+keywords = ["rubygems_"]
+
+# =============================================================================
+# Version Control Systems
+# =============================================================================
+
+[[patterns]]
+id = "vcs/atlassian-api-token"
+group = "vcs"
+name = "Atlassian API Token"
+description = "Atlassian API token (ATATT3 prefix). Grants full API access to Jira, Confluence, and Bitbucket Cloud."
+severity = "critical"
+default_enabled = true
+min_entropy = 3.5
+regex = '''\b(ATATT3[A-Za-z0-9_=-]{186})\b'''
+keywords = ["ATATT3"]
+
+[[patterns]]
+id = "vcs/github-app-installation-token"
+group = "vcs"
+name = "GitHub App Server-to-Server Token"
+description = "GitHub App installation token (ghs_ prefix). Grants access to repos where app is installed."
+severity = "critical"
+default_enabled = true
+min_entropy = 4.0
+regex = '''\b(ghs_[A-Za-z0-9]{36})\b'''
+keywords = ["ghs_"]
+
+[[patterns]]
+id = "vcs/github-app-refresh-token"
+group = "vcs"
+name = "GitHub App Refresh Token"
+description = "GitHub App refresh token (ghr_ prefix). Can generate new access tokens without user interaction."
+severity = "critical"
+default_enabled = true
+min_entropy = 4.0
+regex = '''\b(ghr_[A-Za-z0-9]{36})\b'''
+keywords = ["ghr_"]
+
+[[patterns]]
+id = "vcs/github-app-user-token"
+group = "vcs"
+name = "GitHub App User-to-Server Token"
+description = "GitHub App user token (ghu_ prefix). Grants access on behalf of user through GitHub App."
+severity = "high"
+default_enabled = true
+min_entropy = 4.0
+regex = '''\b(ghu_[A-Za-z0-9]{36})\b'''
+keywords = ["ghu_"]
+
+[[patterns]]
+id = "vcs/github-fine-grained-pat"
+group = "vcs"
+name = "GitHub Fine-Grained Personal Access Token"
+description = "GitHub fine-grained PAT (github_pat_ prefix). Grants scoped access to specified repositories."
+severity = "critical"
+default_enabled = true
+min_entropy = 4.0
+regex = '''\b(github_pat_[A-Za-z0-9]{22}_[A-Za-z0-9]{59})\b'''
+keywords = ["github_pat_"]
+
+[[patterns]]
+id = "vcs/github-oauth-token"
+group = "vcs"
+name = "GitHub OAuth Access Token"
+description = "GitHub OAuth token (gho_ prefix). Grants delegated access to user resources via OAuth app."
+severity = "high"
+default_enabled = true
+min_entropy = 4.0
+regex = '''\b(gho_[A-Za-z0-9]{36})\b'''
+keywords = ["gho_"]
+
+[[patterns]]
+id = "vcs/github-pat"
+group = "vcs"
+name = "GitHub Personal Access Token (Classic)"
+description = "GitHub PAT (ghp_ prefix). Grants repository and API access based on token scopes."
+severity = "critical"
+default_enabled = true
+min_entropy = 4.0
+regex = '''\b(ghp_[A-Za-z0-9]{36})\b'''
+keywords = ["ghp_"]
+
+[[patterns]]
+id = "vcs/gitlab-agent-token"
+group = "vcs"
+name = "GitLab Agent for Kubernetes Token"
+description = "GitLab Kubernetes agent token (glagent- prefix). Connects Kubernetes clusters to GitLab."
+severity = "critical"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(glagent-[0-9a-zA-Z_-]{48,64})\b'''
+keywords = ["glagent-"]
+
+[[patterns]]
+id = "vcs/gitlab-deploy-token"
+group = "vcs"
+name = "GitLab Deploy Token"
+description = "GitLab deploy token (gldt- prefix). Read-only access to repositories and registries."
+severity = "medium"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(gldt-[0-9a-zA-Z_-]{20,64})\b'''
+keywords = ["gldt-"]
+
+[[patterns]]
+id = "vcs/gitlab-feature-flags-token"
+group = "vcs"
+name = "GitLab Feature Flags Client Token"
+description = "GitLab feature flags token (glffct- prefix). Retrieves feature flag configurations."
+severity = "medium"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(glffct-[0-9a-zA-Z_-]{20,64})\b'''
+keywords = ["glffct-"]
+
+[[patterns]]
+id = "vcs/gitlab-feed-token"
+group = "vcs"
+name = "GitLab Feed Token"
+description = "GitLab feed token (glft- prefix). Provides read access to RSS feeds of private resources."
+severity = "medium"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(glft-[0-9a-zA-Z_-]{20,64})\b'''
+keywords = ["glft-"]
+
+[[patterns]]
+id = "vcs/gitlab-incoming-email-token"
+group = "vcs"
+name = "GitLab Incoming Email Token"
+description = "GitLab incoming email token (glimt- prefix). Allows creating issues and comments via email."
+severity = "medium"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(glimt-[0-9a-zA-Z_-]{20,64})\b'''
+keywords = ["glimt-"]
+
+[[patterns]]
+id = "vcs/gitlab-legacy-runner-token"
+group = "vcs"
+name = "GitLab Legacy Runner Token"
+description = "GitLab legacy runner token (GR1348941 prefix). Deprecated, scheduled for removal in GitLab 20.0."
+severity = "high"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(GR1348941[0-9a-zA-Z_-]{20})\b'''
+keywords = ["GR1348941"]
+
+[[patterns]]
+id = "vcs/gitlab-oauth-app-secret"
+group = "vcs"
+name = "GitLab OAuth Application Secret"
+description = "GitLab OAuth app secret (gloas- prefix). Used for OAuth authentication flows."
+severity = "high"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(gloas-[0-9a-fA-F]{64})\b'''
+keywords = ["gloas-"]
+
+[[patterns]]
+id = "vcs/gitlab-pat"
+group = "vcs"
+name = "GitLab Personal Access Token"
+description = "GitLab PAT (glpat- prefix). Grants API and Git access based on token scopes."
+severity = "critical"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(glpat-[0-9a-zA-Z_-]{20})\b'''
+keywords = ["glpat-"]
+
+[[patterns]]
+id = "vcs/gitlab-pat-routable"
+group = "vcs"
+name = "GitLab Personal Access Token (Routable)"
+description = "GitLab routable PAT with embedded routing metadata. Used for multi-cell deployments."
+severity = "critical"
+default_enabled = true
+min_entropy = 4.0
+regex = '''\b(glpat-[0-9a-zA-Z_-]{27,300}\.[0-9a-zA-Z_-]+)\b'''
+keywords = ["glpat-"]
+
+[[patterns]]
+id = "vcs/gitlab-pipeline-token"
+group = "vcs"
+name = "GitLab Pipeline Trigger Token"
+description = "GitLab pipeline trigger token (glptt- prefix). Can trigger CI/CD pipelines remotely."
+severity = "high"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(glptt-[0-9a-zA-Z_-]{20,64})\b'''
+keywords = ["glptt-"]
+
+[[patterns]]
+id = "vcs/gitlab-runner-token"
+group = "vcs"
+name = "GitLab Runner Registration Token"
+description = "GitLab runner token (glrt- prefix). Allows registering new CI/CD runners."
+severity = "high"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(glrt-[0-9a-zA-Z_-]{20,64})\b'''
+keywords = ["glrt-"]
+
+[[patterns]]
+id = "vcs/gitlab-scim-token"
+group = "vcs"
+name = "GitLab SCIM Token"
+description = "GitLab SCIM token (glsoat- prefix). Manages group membership via SCIM provisioning."
+severity = "high"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(glsoat-[0-9a-zA-Z_-]{20,64})\b'''
+keywords = ["glsoat-"]
+
+[[patterns]]
+id = "vcs/gitlab-workspace-token"
+group = "vcs"
+name = "GitLab Workspace Token"
+description = "GitLab workspace token (glwt- prefix). Used internally for GitLab Workspaces communication."
+severity = "medium"
+default_enabled = true
+min_entropy = 3.0
+regex = '''\b(glwt-[0-9a-zA-Z_-]{20,64})\b'''
+keywords = ["glwt-"]

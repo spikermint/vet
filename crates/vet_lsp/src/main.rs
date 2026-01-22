@@ -1,0 +1,34 @@
+mod code_actions;
+mod comment_syntax;
+mod diagnostics;
+mod exclusions;
+mod hover;
+mod server;
+mod state;
+mod uri;
+
+use server::VetLanguageServer;
+use tower_lsp::{LspService, Server};
+use tracing_subscriber::EnvFilter;
+
+#[tokio::main]
+async fn main() {
+    init_logging();
+
+    let stdin = tokio::io::stdin();
+    let stdout = tokio::io::stdout();
+
+    let (service, socket) = LspService::new(VetLanguageServer::new);
+    Server::new(stdin, stdout, socket).serve(service).await;
+}
+
+fn init_logging() {
+    let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
+
+    tracing_subscriber::fmt()
+        .with_env_filter(filter)
+        .with_writer(std::io::stderr)
+        .with_ansi(false)
+        .with_target(false)
+        .init();
+}
