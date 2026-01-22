@@ -1,4 +1,10 @@
 # vet
+## 0.1.2 (2026-01-22)
+
+### Fixes
+
+- trigger vscode extension release (#6)
+
 ## 0.1.1 (2026-01-22)
 
 ### Features
