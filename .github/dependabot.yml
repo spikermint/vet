@@ -16,3 +16,11 @@ updates:
       interval: weekly
     commit-message:
       prefix: "chore(deps)"
+
+  - package-ecosystem: "npm"
+    directory: "/editors/vscode"
+    schedule:
+      interval: "weekly"
+    ignore:
+      # Must match engines.vscode — vsce validates this at package time
+      - dependency-name: "@types/vscode"
