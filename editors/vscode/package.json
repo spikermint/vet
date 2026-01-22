@@ -1,85 +1,77 @@
 {
-    "name": "vet",
-    "displayName": "Vet",
-    "description": "Detect secrets in your code before they leak",
-    "version": "0.1.0",
-    "publisher": "vet",
-    "license": "MIT",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/spikermint/vet"
-    },
-    "homepage": "https://github.com/spikermint/vet",
-    "bugs": {
-        "url": "https://github.com/spikermint/vet/issues"
-    },
-    "engines": {
-        "vscode": "^1.90.0",
-        "node": ">=22"
-    },
-    "categories": [
-        "Linters"
-    ],
-    "keywords": [
-        "security",
-        "secrets",
-        "credentials",
-        "scanner",
-        "api-keys"
-    ],
-    "activationEvents": [
-        "onStartupFinished"
-    ],
-    "main": "./dist/extension.js",
-    "files": [
-        "dist",
-        "server"
-    ],
-    "icon": "icon.png",
-    "contributes": {
-        "configuration": {
-            "title": "Vet",
-            "properties": {
-                "vet.enable": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Enable Vet secret scanning"
-                },
-                "vet.serverPath": {
-                    "type": "string",
-                    "default": "",
-                    "scope": "machine-overridable",
-                    "markdownDescription": "Path to `vet-lsp` binary. Leave empty to use the bundled server. Primarily useful for extension development."
-                },
-                "vet.includeLowConfidence": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Show low-confidence findings (likely placeholders or examples)"
-                },
-                "vet.respectGitignore": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Skip files ignored by .gitignore"
-                },
-                "vet.trace.server": {
-                    "type": "string",
-                    "enum": [
-                        "off",
-                        "messages",
-                        "verbose"
-                    ],
-                    "default": "off",
-                    "description": "Trace communication with the language server (for debugging)"
-                }
-            }
+  "name": "vet",
+  "displayName": "Vet",
+  "description": "Detect secrets in your code before they leak",
+  "version": "0.1.1",
+  "publisher": "vet",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/spikermint/vet"
+  },
+  "homepage": "https://github.com/spikermint/vet",
+  "bugs": {
+    "url": "https://github.com/spikermint/vet/issues"
+  },
+  "engines": {
+    "vscode": "^1.90.0",
+    "node": ">=22"
+  },
+  "categories": [
+    "Linters"
+  ],
+  "keywords": [
+    "security",
+    "secrets",
+    "credentials",
+    "scanner",
+    "api-keys"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "files": [
+    "dist",
+    "server"
+  ],
+  "icon": "icon.png",
+  "contributes": {
+    "configuration": {
+      "title": "Vet",
+      "properties": {
+        "vet.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Vet secret scanning"
         },
-        "commands": [
-            {
-                "command": "vet.restart",
-                "title": "Restart Language Server",
-                "category": "Vet"
-            }
-        ]
+        "vet.serverPath": {
+          "type": "string",
+          "default": "",
+          "scope": "machine-overridable",
+          "markdownDescription": "Path to `vet-lsp` binary. Leave empty to use the bundled server. Primarily useful for extension development."
+        },
+        "vet.includeLowConfidence": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show low-confidence findings (likely placeholders or examples)"
+        },
+        "vet.respectGitignore": {
+          "type": "boolean",
+          "default": true,
+          "description": "Skip files ignored by .gitignore"
+        },
+        "vet.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Trace communication with the language server (for debugging)"
+        }
+      }
     },
     "scripts": {
         "compile": "npm run typecheck && node esbuild.js",
