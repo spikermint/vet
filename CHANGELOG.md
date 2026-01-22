@@ -1,4 +1,10 @@
 # vet
+## 0.1.4 (2026-01-22)
+
+### Fixes
+
+- keyword matching and hover formatting (#10)
+
 ## 0.1.3 (2026-01-22)
 
 ### Fixes
