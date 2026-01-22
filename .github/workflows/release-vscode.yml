@@ -121,10 +121,6 @@ jobs:
         working-directory: editors/vscode
         run: npm ci
 
-      - name: Package extension
-        working-directory: editors/vscode
-        run: npx vsce package
-
       - name: Publish to Marketplace
         working-directory: editors/vscode
         run: npx vsce publish

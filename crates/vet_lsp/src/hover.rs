@@ -15,33 +15,38 @@ pub fn pattern_hover(pattern: &Pattern, range: Range) -> Hover {
 }
 
 fn format_pattern_markdown(pattern: &Pattern) -> String {
-    let mut lines = Vec::new();
+    let mut sections = Vec::new();
 
-    lines.push(format!("### {}", pattern.name));
-    lines.push(String::new());
+    sections.push(format!("## {}", pattern.name));
+    sections.push(String::new());
+    sections.push(pattern.description.to_string());
+    sections.push(String::new());
 
-    lines.push(pattern.description.to_string());
-    lines.push(String::new());
-
-    let severity_badge = format_severity_badge(pattern.severity);
-    lines.push(format!("**Severity:** {} · **ID:** `{}`", severity_badge, pattern.id));
+    sections.push(format!("**{}** severity", format_severity(pattern.severity)));
+    sections.push(String::new());
 
     if let Some(remediation) = &pattern.remediation {
-        lines.push(String::new());
-        lines.push("---".to_string());
-        lines.push(String::new());
-        lines.push(format!("**Remediation:** {}", remediation));
+        sections.push("---".to_string());
+        sections.push(String::new());
+        sections.push("**Remediation**".to_string());
+        sections.push(String::new());
+        sections.push(remediation.to_string());
+        sections.push(String::new());
     }
 
-    lines.join("\n")
+    sections.push("---".to_string());
+    sections.push(String::new());
+    sections.push(format!("`{}`", pattern.id));
+
+    sections.join("\n")
 }
 
-fn format_severity_badge(severity: Severity) -> &'static str {
+fn format_severity(severity: Severity) -> &'static str {
     match severity {
-        Severity::Critical => "🔴 Critical",
-        Severity::High => "🟠 High",
-        Severity::Medium => "🟡 Medium",
-        Severity::Low => "🟢 Low",
+        Severity::Critical => "Critical",
+        Severity::High => "High",
+        Severity::Medium => "Medium",
+        Severity::Low => "Low",
     }
 }
 
@@ -81,12 +86,12 @@ mod tests {
             "aws/access-key",
             "AWS Access Key ID",
             "Matches AWS access key IDs",
-            Severity::Critical,
+            Severity::High,
             None,
         );
         let hover = pattern_hover(&pattern, Range::default());
 
-        assert!(hover_markdown(&hover).contains("AWS Access Key ID"));
+        assert!(hover_markdown(&hover).contains("## AWS Access Key ID"));
     }
 
     #[test]
@@ -104,7 +109,7 @@ mod tests {
     }
 
     #[test]
-    fn hover_contains_pattern_id() {
+    fn hover_contains_pattern_id_at_end() {
         let pattern = make_pattern(
             "aws/secret-key",
             "AWS Secret Key",
@@ -113,48 +118,47 @@ mod tests {
             None,
         );
         let hover = pattern_hover(&pattern, Range::default());
+        let markdown = hover_markdown(&hover);
 
-        assert!(hover_markdown(&hover).contains("`aws/secret-key`"));
+        assert!(markdown.contains("`aws/secret-key`"));
+        assert!(markdown.ends_with("`aws/secret-key`"));
     }
 
     #[test]
-    fn hover_contains_severity_critical() {
+    fn hover_critical_shows_simple_text() {
         let pattern = make_pattern("test", "Test", "Desc", Severity::Critical, None);
         let hover = pattern_hover(&pattern, Range::default());
 
         let markdown = hover_markdown(&hover);
-        assert!(markdown.contains("Critical"));
-        assert!(markdown.contains("🔴"));
+        assert!(markdown.contains("**Critical** severity"));
     }
 
     #[test]
-    fn hover_contains_severity_high() {
+    fn hover_high_shows_simple_text() {
         let pattern = make_pattern("test", "Test", "Desc", Severity::High, None);
         let hover = pattern_hover(&pattern, Range::default());
 
         let markdown = hover_markdown(&hover);
-        assert!(markdown.contains("High"));
-        assert!(markdown.contains("🟠"));
+        assert!(markdown.contains("**High** severity"));
+        assert!(!markdown.contains(">"));
     }
 
     #[test]
-    fn hover_contains_severity_medium() {
+    fn hover_medium_shows_simple_text() {
         let pattern = make_pattern("test", "Test", "Desc", Severity::Medium, None);
         let hover = pattern_hover(&pattern, Range::default());
 
         let markdown = hover_markdown(&hover);
-        assert!(markdown.contains("Medium"));
-        assert!(markdown.contains("🟡"));
+        assert!(markdown.contains("**Medium** severity"));
     }
 
     #[test]
-    fn hover_contains_severity_low() {
+    fn hover_low_shows_simple_text() {
         let pattern = make_pattern("test", "Test", "Desc", Severity::Low, None);
         let hover = pattern_hover(&pattern, Range::default());
 
         let markdown = hover_markdown(&hover);
-        assert!(markdown.contains("Low"));
-        assert!(markdown.contains("🟢"));
+        assert!(markdown.contains("**Low** severity"));
     }
 
     #[test]
@@ -169,7 +173,7 @@ mod tests {
         let hover = pattern_hover(&pattern, Range::default());
 
         let markdown = hover_markdown(&hover);
-        assert!(markdown.contains("Remediation"));
+        assert!(markdown.contains("**Remediation**"));
         assert!(markdown.contains("Rotate the credential immediately"));
     }
 
@@ -178,7 +182,7 @@ mod tests {
         let pattern = make_pattern("test", "Test", "Desc", Severity::High, None);
         let hover = pattern_hover(&pattern, Range::default());
 
-        assert!(!hover_markdown(&hover).contains("Remediation"));
+        assert!(!hover_markdown(&hover).contains("**Remediation**"));
     }
 
     #[test]
