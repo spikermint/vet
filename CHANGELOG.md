@@ -1,4 +1,10 @@
 # vet
+## 0.1.3 (2026-01-22)
+
+### Fixes
+
+- resolve vsce packaging errors (#8)
+
 ## 0.1.2 (2026-01-22)
 
 ### Fixes
