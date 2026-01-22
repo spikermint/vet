@@ -213,7 +213,11 @@ fn build_automaton(keywords: &[String]) -> Option<AhoCorasick> {
         return None;
     }
 
-    AhoCorasick::builder().ascii_case_insensitive(true).build(keywords).ok()
+    AhoCorasick::builder()
+        .ascii_case_insensitive(true)
+        .match_kind(aho_corasick::MatchKind::LeftmostLongest)
+        .build(keywords)
+        .ok()
 }
 
 #[cfg(test)]
