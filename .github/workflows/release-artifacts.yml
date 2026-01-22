@@ -33,7 +33,7 @@ jobs:
             target: aarch64-unknown-linux-gnu
             artifact: vet-linux-arm64
             cross: true
-            
+
           # macOS x64 (Intel)
           - os: macos-latest
             target: x86_64-apple-darwin

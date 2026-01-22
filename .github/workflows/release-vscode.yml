@@ -23,27 +23,33 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # Linux x64
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             artifact: vet-lsp-linux-x64
 
+          # Linux ARM64
           - os: ubuntu-latest
             target: aarch64-unknown-linux-gnu
             artifact: vet-lsp-linux-arm64
             cross: true
 
+          # macOS x64 (Intel)
           - os: macos-latest
             target: x86_64-apple-darwin
             artifact: vet-lsp-darwin-x64
 
+          # macOS ARM64 (Apple Silicon)
           - os: macos-latest
             target: aarch64-apple-darwin
             artifact: vet-lsp-darwin-arm64
 
+          # Windows x64
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             artifact: vet-lsp-windows-x64.exe
 
+          # Windows ARM64
           - os: windows-latest
             target: aarch64-pc-windows-msvc
             artifact: vet-lsp-windows-arm64.exe
