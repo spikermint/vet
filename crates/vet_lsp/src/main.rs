@@ -7,9 +7,13 @@ mod server;
 mod state;
 mod uri;
 
+use std::fmt;
+
 use server::VetLanguageServer;
 use tower_lsp::{LspService, Server};
 use tracing_subscriber::EnvFilter;
+use tracing_subscriber::fmt::format::Writer;
+use tracing_subscriber::fmt::time::FormatTime;
 
 #[tokio::main]
 async fn main() {
@@ -30,5 +34,15 @@ fn init_logging() {
         .with_writer(std::io::stderr)
         .with_ansi(false)
         .with_target(false)
+        .with_level(false)
+        .with_timer(LspPrefix)
         .init();
+}
+
+struct LspPrefix;
+
+impl FormatTime for LspPrefix {
+    fn format_time(&self, w: &mut Writer<'_>) -> fmt::Result {
+        write!(w, "[lsp]   ")
+    }
 }

@@ -11,32 +11,76 @@ const PLATFORM_TARGETS: Record<string, string> = {
 	"win32-arm64": "windows-arm64",
 };
 
-export function resolveServerPath(
-	context: ExtensionContext,
-): string | undefined {
+export interface ServerResolution {
+	path: string;
+	warning?: string;
+}
+
+export interface ServerResolutionError {
+	reason: "invalid-config" | "unsupported-platform" | "binary-not-found";
+	message: string;
+	platform?: string;
+}
+
+export type ResolveResult =
+	| { ok: true; resolution: ServerResolution }
+	| { ok: false; error: ServerResolutionError };
+
+export function resolveServerPath(context: ExtensionContext): ResolveResult {
 	const configuredPath = workspace
 		.getConfiguration("vet")
 		.get<string>("serverPath");
 
 	if (configuredPath && configuredPath.trim() !== "") {
 		if (fs.existsSync(configuredPath)) {
-			return configuredPath;
+			return { ok: true, resolution: { path: configuredPath } };
 		}
-		console.warn(
-			`[Vet] Configured serverPath does not exist: ${configuredPath}`,
-		);
+
+		const bundled = getBundledServerPath(context);
+		if (bundled.ok) {
+			return {
+				ok: true,
+				resolution: {
+					path: bundled.path,
+					warning: `Configured vet.serverPath does not exist: ${configuredPath}. Falling back to bundled binary.`,
+				},
+			};
+		}
+
+		return {
+			ok: false,
+			error: {
+				reason: "invalid-config",
+				message: `Configured vet.serverPath does not exist: ${configuredPath}`,
+			},
+		};
 	}
 
-	return getBundledServerPath(context);
+	const bundled = getBundledServerPath(context);
+	if (bundled.ok) {
+		return { ok: true, resolution: { path: bundled.path } };
+	}
+
+	return { ok: false, error: bundled.error };
 }
 
-function getBundledServerPath(context: ExtensionContext): string | undefined {
+type BundledResult =
+	| { ok: true; path: string }
+	| { ok: false; error: ServerResolutionError };
+
+function getBundledServerPath(context: ExtensionContext): BundledResult {
 	const platformKey = `${process.platform}-${process.arch}`;
 	const target = PLATFORM_TARGETS[platformKey];
 
 	if (!target) {
-		console.error(`[Vet] Unsupported platform: ${platformKey}`);
-		return undefined;
+		return {
+			ok: false,
+			error: {
+				reason: "unsupported-platform",
+				message: `Unsupported platform: ${platformKey}. Vet supports: macOS (x64, arm64), Linux (x64, arm64), Windows (x64, arm64).`,
+				platform: platformKey,
+			},
+		};
 	}
 
 	const ext = process.platform === "win32" ? ".exe" : "";
@@ -44,9 +88,14 @@ function getBundledServerPath(context: ExtensionContext): string | undefined {
 	const serverPath = path.join(context.extensionPath, "server", binaryName);
 
 	if (fs.existsSync(serverPath)) {
-		return serverPath;
+		return { ok: true, path: serverPath };
 	}
 
-	console.error(`[Vet] Bundled server not found: ${serverPath}`);
-	return undefined;
+	return {
+		ok: false,
+		error: {
+			reason: "binary-not-found",
+			message: `Bundled server not found at: ${serverPath}. Try reinstalling the extension.`,
+		},
+	};
 }

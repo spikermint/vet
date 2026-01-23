@@ -4,6 +4,7 @@ import {
 	type LanguageClientOptions,
 	type ServerOptions,
 } from "vscode-languageclient/node";
+import type { NotificationService } from "../services/NotificationService";
 import { resolveServerPath } from "../services/ServerResolver";
 import type { StatusBarService } from "../services/StatusBarService";
 
@@ -15,23 +16,32 @@ export class VetClient {
 		private readonly context: ExtensionContext,
 		private readonly outputChannel: OutputChannel,
 		private readonly statusBar: StatusBarService,
+		private readonly notifications: NotificationService,
 	) {}
 
 	async start(): Promise<void> {
-		const serverPath = resolveServerPath(this.context);
+		const startTime = Date.now();
+		const version = this.context.extension.packageJSON.version as string;
+		this.log(`Vet v${version} starting...`);
 
-		if (!serverPath) {
-			this.statusBar.setError("Server not found");
-			this.outputChannel.appendLine(
-				"[Vet] Could not find vet-lsp binary. Set vet.serverPath or reinstall the extension.",
-			);
+		const result = resolveServerPath(this.context);
+
+		if (!result.ok) {
+			this.handleResolutionError(result.error);
 			return;
 		}
 
-		this.outputChannel.appendLine(`[Vet] Using server: ${serverPath}`);
+		const { resolution } = result;
+
+		if (resolution.warning) {
+			this.notifications.showWarning(resolution.warning);
+			this.log(`Warning: ${resolution.warning}`);
+		}
+
+		this.log(`Using server: ${resolution.path}`);
 
 		const serverOptions: ServerOptions = {
-			command: serverPath,
+			command: resolution.path,
 			args: [],
 		};
 
@@ -61,11 +71,11 @@ export class VetClient {
 
 		try {
 			await this.client.start();
+			const elapsed = Date.now() - startTime;
 			this.statusBar.setReady();
-			this.outputChannel.appendLine("[Vet] Language server started");
+			this.log(`Language server started in ${elapsed}ms`);
 		} catch (error) {
-			this.statusBar.setError("Failed to start");
-			this.outputChannel.appendLine(`[Vet] Failed to start server: ${error}`);
+			this.handleStartupError(error);
 		}
 	}
 
@@ -83,6 +93,7 @@ export class VetClient {
 
 		this.isRestarting = true;
 		this.statusBar.setRestarting();
+		this.log("Restarting language server...");
 
 		try {
 			await this.stop();
@@ -90,5 +101,25 @@ export class VetClient {
 		} finally {
 			this.isRestarting = false;
 		}
+	}
+
+	private handleResolutionError(error: {
+		reason: string;
+		message: string;
+	}): void {
+		this.statusBar.setError("Server not found");
+		this.notifications.showError(error.message);
+		this.log(`Error: ${error.message}`);
+	}
+
+	private handleStartupError(error: unknown): void {
+		const message = `Failed to start language server: ${error}`;
+		this.statusBar.setError("Failed to start");
+		this.notifications.showError(message);
+		this.log(`Error: ${message}`);
+	}
+
+	private log(message: string): void {
+		this.outputChannel.appendLine(`[client] ${message}`);
 	}
 }

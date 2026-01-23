@@ -47,7 +47,7 @@ impl VetLanguageServer {
 impl LanguageServer for VetLanguageServer {
     async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
         let roots = extract_workspace_roots(&params);
-        info!("[vet-lsp] Initialising with {} workspace root(s)", roots.len());
+        info!("Initialising with {} workspace root(s)", roots.len());
 
         self.init_scanner().await;
         self.set_workspace_roots(roots).await;
@@ -59,7 +59,7 @@ impl LanguageServer for VetLanguageServer {
     }
 
     async fn initialized(&self, _: InitializedParams) {
-        info!("[vet-lsp] Server initialised");
+        info!("Server initialised");
 
         if let Err(e) = self.register_file_watchers().await {
             warn!("Failed to register file watchers: {e}");
@@ -67,7 +67,7 @@ impl LanguageServer for VetLanguageServer {
     }
 
     async fn shutdown(&self) -> Result<()> {
-        info!("[vet-lsp] Shutting down");
+        info!("Shutting down");
         Ok(())
     }
 
@@ -148,10 +148,7 @@ impl LanguageServer for VetLanguageServer {
             }
         }
 
-        info!(
-            "[vet-lsp] Workspace folders changed: {} root(s)",
-            state.workspace_roots.len()
-        );
+        info!("Workspace folders changed: {} root(s)", state.workspace_roots.len());
         drop(state);
 
         self.reload_config().await;

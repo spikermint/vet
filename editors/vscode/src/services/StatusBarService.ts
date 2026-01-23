@@ -2,6 +2,7 @@ import {
 	type Disposable,
 	StatusBarAlignment,
 	type StatusBarItem,
+	ThemeColor,
 	window,
 } from "vscode";
 
@@ -30,7 +31,7 @@ export class StatusBarService implements Disposable {
 	setError(message: string): void {
 		this.item.text = "$(shield) Vet $(warning)";
 		this.item.tooltip = `Vet: ${message}. Click to restart.`;
-		this.item.backgroundColor = undefined;
+		this.item.backgroundColor = new ThemeColor("statusBarItem.errorBackground");
 	}
 
 	dispose(): void {
