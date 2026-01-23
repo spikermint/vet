@@ -1,4 +1,10 @@
 # vet
+## 0.1.8 (2026-01-23)
+
+### Fixes
+
+- crash when scanning untitled documents (#19)
+
 ## 0.1.7 (2026-01-23)
 
 ### Features
