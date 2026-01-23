@@ -90,18 +90,24 @@
     "vscode:prepublish": "npm run package",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "npm run build:lsp && npm run compile:e2e && node dist/test/e2e/runTest.js",
+    "compile:e2e": "tsc -p test/e2e/tsconfig.json",
+    "build:lsp": "cargo build --release --package vet_lsp -q && mkdir -p server && cp ../../target/release/vet-lsp server/vet-lsp-darwin-arm64"
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1"
   },
   "devDependencies": {
     "@biomejs/biome": "2.3.11",
+    "@types/mocha": "^10.0.10",
     "@types/node": "^25.0.10",
     "@types/vscode": "1.90.0",
     "@vitest/coverage-v8": "^4.0.18",
+    "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.7.1",
     "esbuild": "^0.27.2",
+    "mocha": "^11.7.5",
     "npm-run-all": "^4.1.5",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
