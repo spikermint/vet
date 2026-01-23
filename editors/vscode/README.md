@@ -1,43 +1,52 @@
 # Vet for Visual Studio Code
 
-Detect secrets in your code before they leak — right in your editor.
+Catch secrets before they leak — right in your editor.
+
+![Vet detecting a Stripe secret key](../../.github/assets/extension/recording.gif)
 
 ## Features
 
-- **Real-time scanning** — Secrets are highlighted as you type
-- **95+ patterns** — AWS, GCP, Azure, Stripe, OpenAI, and more
-- **Hover for details** — See pattern info and remediation tips
-- **Low noise** — Filters out placeholders and example values
+- **Real-time detection** — Secrets highlighted as you type
+- **95+ patterns** — AWS, GCP, Azure, Stripe, OpenAI, GitHub, and more
+- **Hover for details** — Severity, description, and remediation steps
+- **Quick fixes** — Add ignore comments with one click
 - **Git-aware** — Respects your `.gitignore`
 
 ## Installation
 
-Install from the [Visual Studio Code Marketplace](https://marketplace.visualstudio.com/items?itemName=vet.vet) or search for "Vet" in the Extensions view (`Cmd+Shift+X`).
+Search **"Vet"** in the Extensions view (`Cmd+Shift+X`) or install from the [Marketplace](https://marketplace.visualstudio.com/items?itemName=vet.vet).
 
 ## Settings
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `vet.enable` | `true` | Enable or disable secret scanning |
-| `vet.includeLowConfidence` | `false` | Show low-confidence findings (likely placeholders) |
-| `vet.respectGitignore` | `true` | Skip files ignored by `.gitignore` |
+| `vet.enable` | `true` | Enable or disable scanning |
+| `vet.includeLowConfidence` | `false` | Show low-confidence findings |
+| `vet.respectGitignore` | `true` | Skip gitignored files |
 
-## Commands
+## Project Configuration
 
-| Command | Description |
-|---------|-------------|
-| `Vet: Restart Language Server` | Restart the scanner |
+Create a `.vet.toml` in your workspace root:
+```toml
+severity = "medium"
+exclude_paths = ["vendor/**", "*.test.js"]
 
-## Configuration File
+# Custom patterns
+[[patterns]]
+id = "custom/internal-token"
+name = "Internal Token"
+regex = 'INTERNAL_[A-Z0-9]{32}'
+severity = "high"
+```
 
-For project-specific settings, create a `.vet.toml` file in your workspace root. See the [configuration documentation](https://github.com/spikermint/vet#configuration) for details.
+See the [full configuration docs](https://github.com/spikermint/vet#configuration).
 
 ## Links
 
 - [GitHub](https://github.com/spikermint/vet)
+- [CLI Tool](https://github.com/spikermint/vet#installation)
 - [Report an Issue](https://github.com/spikermint/vet/issues)
-- [CLI Documentation](https://github.com/spikermint/vet#cli-reference)
 
 ## Licence
 
-[MIT](https://github.com/spikermint/vet/blob/main/LICENSE)
+vet is [MIT licensed](LICENSE)

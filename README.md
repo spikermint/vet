@@ -36,7 +36,6 @@ Secrets leak when they hit git history.
 
 Existing tools scan in CI — **after** the secret is already pushed. Vet catches them **before** they leave your machine.
 
-- **Offline** — nothing leaves your laptop
 - **Fast** — sub-100ms scans, Rust-powered
 - **Zero config** — works immediately
 - **95+ patterns** — AWS, Stripe, OpenAI, GitHub, and more
