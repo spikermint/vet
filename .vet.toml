@@ -1,0 +1,22 @@
+severity = "low"
+max_file_size = 1048576
+
+exclude_paths = [
+  # Test files
+  "**/tests/**",
+  "**/*_test.rs",
+  "**/test/**",
+  "**/fixtures/**",
+  "**/benches/**",
+  
+  # Pattern definitions (regexes look like secrets)
+  "**/patterns.toml",
+  
+  # Smoke test scripts (intentional test secrets)
+  "scripts/smoke-test.*",
+  
+  # Source files with test cases
+  "**/entropy.rs",
+  "**/code_actions.rs",
+  "**/scanner/mod.rs",
+]
