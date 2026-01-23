@@ -1,4 +1,10 @@
 # vet
+## 0.1.5 (2026-01-23)
+
+### Fixes
+
+- fix LSP binary packaging structure and permissions (#12)
+
 ## 0.1.4 (2026-01-22)
 
 ### Fixes
