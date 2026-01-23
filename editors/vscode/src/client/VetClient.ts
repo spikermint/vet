@@ -17,7 +17,7 @@ export class VetClient {
 		private readonly outputChannel: OutputChannel,
 		private readonly statusBar: StatusBarService,
 		private readonly notifications: NotificationService,
-	) { }
+	) {}
 
 	async start(): Promise<void> {
 		const startTime = Date.now();
