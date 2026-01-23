@@ -2,7 +2,7 @@
 
 Catch secrets before they leak — right in your editor.
 
-![Vet detecting a Stripe secret key](../../.github/assets/extension/recording.gif)
+![Vet detecting a Stripe secret key](https://raw.githubusercontent.com/spikermint/vet/refs/heads/main/.github/assets/extension/recording.gif)
 
 ## Features
 
