@@ -4,6 +4,7 @@ import {
 	type LanguageClientOptions,
 	type ServerOptions,
 } from "vscode-languageclient/node";
+import type { NotificationService } from "../services/NotificationService";
 import { resolveServerPath } from "../services/ServerResolver";
 import type { StatusBarService } from "../services/StatusBarService";
 
@@ -15,23 +16,26 @@ export class VetClient {
 		private readonly context: ExtensionContext,
 		private readonly outputChannel: OutputChannel,
 		private readonly statusBar: StatusBarService,
-	) {}
+		private readonly notifications: NotificationService,
+	) { }
 
 	async start(): Promise<void> {
-		const serverPath = resolveServerPath(this.context);
+		const resolution = resolveServerPath(this.context);
 
-		if (!serverPath) {
-			this.statusBar.setError("Server not found");
-			this.outputChannel.appendLine(
-				"[Vet] Could not find vet-lsp binary. Set vet.serverPath or reinstall the extension.",
-			);
+		if (!resolution) {
+			this.handleServerNotFound();
 			return;
 		}
 
-		this.outputChannel.appendLine(`[Vet] Using server: ${serverPath}`);
+		if (resolution.warning) {
+			this.notifications.showWarning(resolution.warning);
+			this.outputChannel.appendLine(`[Vet] Warning: ${resolution.warning}`);
+		}
+
+		this.outputChannel.appendLine(`[Vet] Using server: ${resolution.path}`);
 
 		const serverOptions: ServerOptions = {
-			command: serverPath,
+			command: resolution.path,
 			args: [],
 		};
 
@@ -64,8 +68,7 @@ export class VetClient {
 			this.statusBar.setReady();
 			this.outputChannel.appendLine("[Vet] Language server started");
 		} catch (error) {
-			this.statusBar.setError("Failed to start");
-			this.outputChannel.appendLine(`[Vet] Failed to start server: ${error}`);
+			this.handleStartupError(error);
 		}
 	}
 
@@ -90,5 +93,20 @@ export class VetClient {
 		} finally {
 			this.isRestarting = false;
 		}
+	}
+
+	private handleServerNotFound(): void {
+		const message =
+			"Could not find Vet language server. Set vet.serverPath in settings or reinstall the extension.";
+		this.statusBar.setError("Server not found");
+		this.notifications.showError(message);
+		this.outputChannel.appendLine(`[Vet] Error: ${message}`);
+	}
+
+	private handleStartupError(error: unknown): void {
+		const message = `Failed to start Vet language server: ${error}`;
+		this.statusBar.setError("Failed to start");
+		this.notifications.showError(message);
+		this.outputChannel.appendLine(`[Vet] Error: ${message}`);
 	}
 }

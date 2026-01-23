@@ -11,23 +11,40 @@ const PLATFORM_TARGETS: Record<string, string> = {
 	"win32-arm64": "windows-arm64",
 };
 
+export interface ServerResolution {
+	path: string;
+	warning?: string;
+}
+
 export function resolveServerPath(
 	context: ExtensionContext,
-): string | undefined {
+): ServerResolution | undefined {
 	const configuredPath = workspace
 		.getConfiguration("vet")
 		.get<string>("serverPath");
 
 	if (configuredPath && configuredPath.trim() !== "") {
 		if (fs.existsSync(configuredPath)) {
-			return configuredPath;
+			return { path: configuredPath };
 		}
-		console.warn(
-			`[Vet] Configured serverPath does not exist: ${configuredPath}`,
-		);
+
+		const bundledPath = getBundledServerPath(context);
+		if (bundledPath) {
+			return {
+				path: bundledPath,
+				warning: `Configured vet.serverPath does not exist: ${configuredPath}. Falling back to bundled binary.`,
+			};
+		}
+
+		return undefined;
 	}
 
-	return getBundledServerPath(context);
+	const bundledPath = getBundledServerPath(context);
+	if (bundledPath) {
+		return { path: bundledPath };
+	}
+
+	return undefined;
 }
 
 function getBundledServerPath(context: ExtensionContext): string | undefined {
@@ -35,7 +52,6 @@ function getBundledServerPath(context: ExtensionContext): string | undefined {
 	const target = PLATFORM_TARGETS[platformKey];
 
 	if (!target) {
-		console.error(`[Vet] Unsupported platform: ${platformKey}`);
 		return undefined;
 	}
 
@@ -47,6 +63,5 @@ function getBundledServerPath(context: ExtensionContext): string | undefined {
 		return serverPath;
 	}
 
-	console.error(`[Vet] Bundled server not found: ${serverPath}`);
 	return undefined;
 }
