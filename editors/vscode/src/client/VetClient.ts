@@ -20,19 +20,25 @@ export class VetClient {
 	) { }
 
 	async start(): Promise<void> {
-		const resolution = resolveServerPath(this.context);
+		const startTime = Date.now();
+		const version = this.context.extension.packageJSON.version as string;
+		this.log(`Vet v${version} starting...`);
 
-		if (!resolution) {
-			this.handleServerNotFound();
+		const result = resolveServerPath(this.context);
+
+		if (!result.ok) {
+			this.handleResolutionError(result.error);
 			return;
 		}
 
+		const { resolution } = result;
+
 		if (resolution.warning) {
 			this.notifications.showWarning(resolution.warning);
-			this.outputChannel.appendLine(`[Vet] Warning: ${resolution.warning}`);
+			this.log(`Warning: ${resolution.warning}`);
 		}
 
-		this.outputChannel.appendLine(`[Vet] Using server: ${resolution.path}`);
+		this.log(`Using server: ${resolution.path}`);
 
 		const serverOptions: ServerOptions = {
 			command: resolution.path,
@@ -65,8 +71,9 @@ export class VetClient {
 
 		try {
 			await this.client.start();
+			const elapsed = Date.now() - startTime;
 			this.statusBar.setReady();
-			this.outputChannel.appendLine("[Vet] Language server started");
+			this.log(`Language server started in ${elapsed}ms`);
 		} catch (error) {
 			this.handleStartupError(error);
 		}
@@ -86,6 +93,7 @@ export class VetClient {
 
 		this.isRestarting = true;
 		this.statusBar.setRestarting();
+		this.log("Restarting language server...");
 
 		try {
 			await this.stop();
@@ -95,18 +103,23 @@ export class VetClient {
 		}
 	}
 
-	private handleServerNotFound(): void {
-		const message =
-			"Could not find Vet language server. Set vet.serverPath in settings or reinstall the extension.";
+	private handleResolutionError(error: {
+		reason: string;
+		message: string;
+	}): void {
 		this.statusBar.setError("Server not found");
-		this.notifications.showError(message);
-		this.outputChannel.appendLine(`[Vet] Error: ${message}`);
+		this.notifications.showError(error.message);
+		this.log(`Error: ${error.message}`);
 	}
 
 	private handleStartupError(error: unknown): void {
-		const message = `Failed to start Vet language server: ${error}`;
+		const message = `Failed to start language server: ${error}`;
 		this.statusBar.setError("Failed to start");
 		this.notifications.showError(message);
-		this.outputChannel.appendLine(`[Vet] Error: ${message}`);
+		this.log(`Error: ${message}`);
+	}
+
+	private log(message: string): void {
+		this.outputChannel.appendLine(`[client] ${message}`);
 	}
 }

@@ -20,7 +20,7 @@ impl VetLanguageServer {
             && let Some(root) = state.primary_workspace_root()
             && exclusions::is_gitignored(state.gitignore.as_ref(), &path, root)
         {
-            debug!("[vet-lsp] Skipping gitignored file: {}", path.display());
+            debug!("Skipping gitignored file: {}", path.display());
             drop(state);
             self.clear_diagnostics(uri).await;
             return;
@@ -47,14 +47,14 @@ impl VetLanguageServer {
 
         if finding_count > 0 {
             info!(
-                "[vet-lsp] Scanned {} in {} ({} finding{})",
+                "Scanned {} in {} ({} finding{})",
                 filename,
                 format_duration(elapsed),
                 finding_count,
                 if finding_count == 1 { "" } else { "s" }
             );
         } else {
-            debug!("[vet-lsp] Scanned {} in {} (clean)", filename, format_duration(elapsed));
+            debug!("Scanned {} in {} (clean)", filename, format_duration(elapsed));
         }
 
         let diagnostics = findings_to_diagnostics(&filtered);

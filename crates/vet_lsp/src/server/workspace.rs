@@ -23,7 +23,7 @@ impl VetLanguageServer {
 
     pub(super) async fn set_workspace_roots(&self, roots: Vec<PathBuf>) {
         let gitignore = roots.first().and_then(|root| {
-            exclusions::build_gitignore(root).inspect(|_| info!("[vet-lsp] Loaded .gitignore from {}", root.display()))
+            exclusions::build_gitignore(root).inspect(|_| info!("Loaded .gitignore from {}", root.display()))
         });
 
         let mut config = None;
@@ -38,7 +38,7 @@ impl VetLanguageServer {
 
             match Config::load(&config_path) {
                 Ok(loaded_config) => {
-                    info!("[vet-lsp] Loaded config from {}", config_path.display());
+                    info!("Loaded config from {}", config_path.display());
                     exclude_matcher = exclusions::build_exclude_matcher(&loaded_config.exclude_paths, root);
                     config = Some(loaded_config);
                     break;
@@ -61,8 +61,8 @@ impl VetLanguageServer {
         state.gitignore = None;
 
         for root in state.workspace_roots.clone() {
-            state.gitignore = exclusions::build_gitignore(&root)
-                .inspect(|_| info!("[vet-lsp] Reloaded .gitignore from {}", root.display()));
+            state.gitignore =
+                exclusions::build_gitignore(&root).inspect(|_| info!("Reloaded .gitignore from {}", root.display()));
 
             let config_path = root.join(CONFIG_FILENAME);
 
@@ -72,7 +72,7 @@ impl VetLanguageServer {
 
             match Config::load(&config_path) {
                 Ok(config) => {
-                    info!("[vet-lsp] Reloaded config from {}", config_path.display());
+                    info!("Reloaded config from {}", config_path.display());
                     state.exclude_matcher = exclusions::build_exclude_matcher(&config.exclude_paths, &root);
                     state.config = Some(config);
                     break;
@@ -89,7 +89,7 @@ impl VetLanguageServer {
 
         drop(state);
 
-        info!("[vet-lsp] Rescanning {} open document(s)", documents_to_rescan.len());
+        info!("Rescanning {} open document(s)", documents_to_rescan.len());
         for (uri, content) in documents_to_rescan {
             self.scan_document(&uri, &content).await;
         }
