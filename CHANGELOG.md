@@ -1,4 +1,10 @@
 # vet
+## 0.1.11 (2026-01-23)
+
+### Features
+
+- add cross-platform installation smoke tests (#25)
+
 ## 0.1.10 (2026-01-23)
 
 ### Features
