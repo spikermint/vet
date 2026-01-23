@@ -5,7 +5,7 @@ suite("Untitled Document Scanning", () => {
     test("should scan untitled documents without crashing", async () => {
         const document = await vscode.workspace.openTextDocument({
             language: "plaintext",
-            content: "api_key = ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            content: "api_key = test_dummy_key_for_scanning",
         });
 
         const editor = await vscode.window.showTextDocument(document);
