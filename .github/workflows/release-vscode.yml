@@ -91,9 +91,37 @@ jobs:
           if-no-files-found: error
 
   publish:
-    name: Publish Extension
+    name: Publish (${{ matrix.target }})
     needs: build-lsp
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Linux x64
+          - target: linux-x64
+            artifact: vet-lsp-linux-x64
+
+          # Linux ARM64
+          - target: linux-arm64
+            artifact: vet-lsp-linux-arm64
+
+          # macOS x64 (Intel)
+          - target: darwin-x64
+            artifact: vet-lsp-darwin-x64
+
+          # macOS ARM64 (Apple Silicon)
+          - target: darwin-arm64
+            artifact: vet-lsp-darwin-arm64
+
+          # Windows x64
+          - target: win32-x64
+            artifact: vet-lsp-windows-x64.exe
+
+          # Windows ARM64
+          - target: win32-arm64
+            artifact: vet-lsp-windows-arm64.exe
+
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -105,14 +133,14 @@ jobs:
           cache: 'npm'
           cache-dependency-path: editors/vscode/package-lock.json
 
-      - name: Download all LSP binaries
+      - name: Download LSP binary
         uses: actions/download-artifact@v7
         with:
+          name: ${{ matrix.artifact }}
           path: editors/vscode/server
-          merge-multiple: true
 
       - name: Set executable permissions
-        run: chmod +x editors/vscode/server/vet-lsp-*
+        run: chmod +x editors/vscode/server/*
 
       - name: Install dependencies
         working-directory: editors/vscode
@@ -120,6 +148,6 @@ jobs:
 
       - name: Publish to Marketplace
         working-directory: editors/vscode
-        run: npx vsce publish
+        run: npx vsce publish --target ${{ matrix.target }}
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
