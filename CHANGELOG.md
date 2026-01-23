@@ -1,4 +1,10 @@
 # vet
+## 0.1.7 (2026-01-23)
+
+### Features
+
+- improve error handling, notifications, and logging (#16)
+
 ## 0.1.6 (2026-01-23)
 
 ### Features
