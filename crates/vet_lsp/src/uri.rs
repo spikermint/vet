@@ -8,11 +8,6 @@ pub fn try_uri_to_path(uri: &Url) -> Option<PathBuf> {
 }
 
 #[must_use]
-pub fn uri_to_path_lossy(uri: &Url) -> PathBuf {
-    uri.to_file_path().unwrap_or_else(|()| PathBuf::from(uri.as_str()))
-}
-
-#[must_use]
 pub fn extract_workspace_roots(params: &InitializeParams) -> Vec<PathBuf> {
     if let Some(folders) = &params.workspace_folders {
         let roots: Vec<PathBuf> = folders.iter().filter_map(|f| try_uri_to_path(&f.uri)).collect();
@@ -77,30 +72,6 @@ mod tests {
         let path = try_uri_to_path(&uri);
 
         assert!(path.is_none());
-    }
-
-    #[test]
-    fn uri_to_path_lossy_valid_file_uri() {
-        let uri = Url::parse(test_uris::MAIN_RS).unwrap();
-        let path = uri_to_path_lossy(&uri);
-
-        assert!(path.ends_with("main.rs"));
-    }
-
-    #[test]
-    fn uri_to_path_lossy_falls_back_for_http() {
-        let uri = Url::parse("https://example.com/file.rs").unwrap();
-        let path = uri_to_path_lossy(&uri);
-
-        assert_eq!(path, PathBuf::from("https://example.com/file.rs"));
-    }
-
-    #[test]
-    fn uri_to_path_lossy_falls_back_for_custom_scheme() {
-        let uri = Url::parse("untitled:Untitled-1").unwrap();
-        let path = uri_to_path_lossy(&uri);
-
-        assert_eq!(path, PathBuf::from("untitled:Untitled-1"));
     }
 
     #[test]
