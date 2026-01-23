@@ -4,6 +4,7 @@ import path from "node:path";
 export default defineConfig({
     test: {
         globals: true,
+        exclude: ["test/e2e/**", "dist/**", "node_modules/**"],
         alias: {
             vscode: path.resolve(__dirname, "test/unit/mocks/vscode.ts"),
         },
