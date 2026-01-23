@@ -1,4 +1,10 @@
 # vet
+## 0.1.10 (2026-01-23)
+
+### Features
+
+- update vscode readme (#23)
+
 ## 0.1.9 (2026-01-23)
 
 ### Fixes
