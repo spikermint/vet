@@ -23,7 +23,7 @@ async function waitForDiagnostics(
 
 suite("Vet Extension E2E", () => {
     // Navigate from dist/test/e2e/suite back to test/e2e/fixtures/workspace
-    const fixturesPath = path.resolve(__dirname, "../../../../test/e2e/fixtures/workspace");
+    const fixturesPath = path.resolve(__dirname, "../../../test/e2e/fixtures/workspace");
 
     suiteSetup(async () => {
         // Extension ID matches package.json: publisher.name = "vet.vet"

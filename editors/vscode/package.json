@@ -91,7 +91,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "npm run build:lsp && npm run compile:e2e && node dist/test/e2e/runTest.js",
+    "test:e2e": "npm run build:lsp && npm run compile:e2e && node out-test/e2e/runTest.js",
     "compile:e2e": "tsc -p test/e2e/tsconfig.json",
     "build:lsp": "cargo build --release --package vet_lsp -q && mkdir -p server && cp ../../target/release/vet-lsp server/vet-lsp-darwin-arm64"
   },

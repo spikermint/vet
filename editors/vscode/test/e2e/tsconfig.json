@@ -3,7 +3,7 @@
         "target": "ES2022",
         "module": "CommonJS",
         "moduleResolution": "node",
-        "outDir": "../../dist/test/e2e",
+        "outDir": "../../out-test/e2e",
         "rootDir": ".",
         "strict": true,
         "esModuleInterop": true,
