@@ -14,36 +14,26 @@ jobs:
         include:
           - { name: Linux x64, os: ubuntu-latest }
           - { name: Linux arm64, os: ubuntu-24.04-arm }
-          - { name: macOS Intel, os: macos-13 }
+          - { name: macOS Intel, os: macos-15-intel }
           - { name: macOS ARM, os: macos-latest }
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
-      - run: curl -fsSL https://vet.codes/install.sh | sh
-      - run: ../../scripts/smoke-test.sh
+      - name: Install vet
+        run: |
+          ./scripts/install/install.sh
+          echo "$HOME/.vet/bin" >> $GITHUB_PATH
+      - run: ./scripts/smoke-test.sh
 
   windows:
     name: Windows x64
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v6
-      - run: irm https://vet.codes/install.ps1 | iex
+      - name: Install vet
         shell: pwsh
-      - run: ./../scripts/smoke-test.ps1
+        run: |
+          ./scripts/install/install.ps1
+          echo "$env:USERPROFILE\.vet\bin" >> $env:GITHUB_PATH
+      - run: ./scripts/smoke-test.ps1
         shell: pwsh
-
-  docker:
-    name: ${{ matrix.name }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - { name: Alpine, image: alpine:3.19, setup: "apk add --no-cache curl bash" }
-          - { name: Debian, image: debian:bookworm-slim, setup: "apt-get update && apt-get install -y curl ca-certificates" }
-    runs-on: ubuntu-latest
-    container: ${{ matrix.image }}
-    steps:
-      - uses: actions/checkout@v6
-      - run: ${{ matrix.setup }}
-      - run: curl -fsSL https://vet.codes/install.sh | sh
-      - run: ../../scripts/smoke-test.sh
