@@ -1,16 +1,16 @@
 # Vet for Visual Studio Code
 
-Catch secrets before they leak — right in your editor.
+Catch secrets before they leak. Right in your editor.
 
 ![Vet detecting a Stripe secret key](https://raw.githubusercontent.com/spikermint/vet/refs/heads/main/.github/assets/extension/recording.gif)
 
 ## Features
 
-- **Real-time detection** — Secrets highlighted as you type
-- **95+ patterns** — AWS, GCP, Azure, Stripe, OpenAI, GitHub, and more
-- **Hover for details** — Severity, description, and remediation steps
-- **Quick fixes** — Add ignore comments with one click
-- **Git-aware** — Respects your `.gitignore`
+- **Real-time detection** - Secrets highlighted as you type
+- **95+ patterns** - AWS, GCP, Azure, Stripe, OpenAI, GitHub, and more
+- **Hover for details** - Severity, description, and remediation steps
+- **Quick fixes** - Add ignore comments with one click
+- **Git-aware** - Respects your `.gitignore`
 
 ## Installation
 

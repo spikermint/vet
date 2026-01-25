@@ -2,7 +2,7 @@
 
 use std::time::Duration;
 
-use console::{Style, style};
+use console::Style;
 use indicatif::{ProgressBar, ProgressStyle};
 use vet_core::prelude::*;
 
@@ -43,7 +43,11 @@ pub mod exit {
 
 pub fn print_command_header(command: &str) {
     println!();
-    println!("{}", style(format!("vet {command}")).bold());
+    println!(
+        "{} {}",
+        colors::accent().bold().apply_to("vet"),
+        colors::muted().apply_to(command)
+    );
     println!();
 }
 
@@ -65,6 +69,14 @@ pub fn print_error(message: &str) {
     );
 }
 
+pub fn print_warning(message: &str) {
+    eprintln!(
+        "{} {}",
+        colors::warning().apply_to("⚠"),
+        colors::muted().apply_to(message)
+    );
+}
+
 #[must_use]
 pub const fn pluralise_word<'a>(count: usize, singular: &'a str, plural: &'a str) -> &'a str {
     if count == 1 { singular } else { plural }
@@ -81,8 +93,7 @@ pub fn truncate_with_ellipsis(s: &str, max_chars: usize) -> String {
     }
 }
 
-const SPINNER_CHARS: &str = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏";
-const SPINNER_TICK_MS: u64 = 80;
+const PROGRESS_TICK_MS: u64 = 100;
 
 #[must_use]
 pub fn create_file_progress(total: usize) -> ProgressBar {
@@ -90,15 +101,29 @@ pub fn create_file_progress(total: usize) -> ProgressBar {
 
     #[allow(clippy::expect_used)] // Static template string; failure is a programmer error
     pb.set_style(
-        ProgressStyle::default_spinner()
-            .tick_chars(SPINNER_CHARS)
-            .template("{spinner:.magenta} {msg:.dim} {pos} {prefix:.dim}")
-            .expect("invalid progress template"),
+        ProgressStyle::default_bar()
+            .template("{bar:40.cyan/dim} {percent:>3}% {pos}/{len} files ({elapsed} elapsed)")
+            .expect("invalid progress template")
+            .progress_chars("━━╸"),
     );
-    pb.set_message("scanning");
-    pb.set_prefix(format!("/ {total} files"));
-    pb.enable_steady_tick(Duration::from_millis(SPINNER_TICK_MS));
 
+    pb.enable_steady_tick(Duration::from_millis(PROGRESS_TICK_MS));
+    pb
+}
+
+#[must_use]
+pub fn create_commit_progress(total: usize) -> ProgressBar {
+    let pb = ProgressBar::new(total as u64);
+
+    #[allow(clippy::expect_used)] // Static template string; failure is a programmer error
+    pb.set_style(
+        ProgressStyle::default_bar()
+            .template("{bar:40.cyan/dim} {percent:>3}% {pos}/{len} commits ({elapsed} elapsed)")
+            .expect("invalid progress template")
+            .progress_chars("━━╸"),
+    );
+
+    pb.enable_steady_tick(Duration::from_millis(PROGRESS_TICK_MS));
     pb
 }
 

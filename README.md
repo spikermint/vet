@@ -34,11 +34,11 @@
 
 Secrets leak when they hit git history.
 
-Existing tools scan in CI — **after** the secret is already pushed. Vet catches them **before** they leave your machine.
+Existing tools scan in CI - **after** the secret is already pushed. Vet catches them **before** they leave your machine.
 
-- **Fast** — sub-100ms scans, Rust-powered
-- **Zero config** — works immediately
-- **95+ patterns** — AWS, Stripe, OpenAI, GitHub, and more
+- **Fast** - sub-100ms scans, Rust-powered
+- **Zero config** - works immediately
+- **95+ patterns** - AWS, Stripe, OpenAI, GitHub, and more
 
 ## VS Code Extension
 
@@ -82,6 +82,31 @@ vet hook install
 ```
 
 Now secrets are blocked before every commit.
+
+### History Scanning
+
+Already have secrets in your git history? Audit your entire repo:
+
+```bash
+# Scan all commits
+vet history
+
+# Scan last 100 commits
+vet history -n 100
+
+# Scan commits since a tag or date
+vet history --since v1.0.0
+vet history --since 2024-01-01
+
+# Show all occurrences of each secret
+vet history --all
+
+# Output as JSON or SARIF
+vet history --format json
+vet history --format sarif -o report.sarif
+```
+
+Secrets are deduplicated and shown with their first introduction point by default
 
 ## Detected Secrets
 

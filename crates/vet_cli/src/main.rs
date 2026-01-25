@@ -13,6 +13,7 @@
 mod commands;
 mod files;
 mod git;
+mod scanning;
 mod ui;
 
 use std::path::PathBuf;
@@ -48,6 +49,9 @@ enum Command {
     Patterns(PatternsArgs),
 
     Init(InitArgs),
+
+    #[command(visible_alias = "h")]
+    History(HistoryArgs),
 
     Hook {
         #[command(subcommand)]
@@ -108,6 +112,57 @@ pub struct ScanArgs {
 
     #[arg(long)]
     pub staged: bool,
+}
+
+#[derive(Debug, Parser)]
+pub struct HistoryArgs {
+    #[arg(short = 'n', long, value_name = "N")]
+    pub limit: Option<usize>,
+
+    #[arg(long, value_name = "REF")]
+    pub since: Option<String>,
+
+    #[arg(long, value_name = "REF", default_value = "HEAD")]
+    pub until: String,
+
+    #[arg(long, value_name = "NAME")]
+    pub branch: Option<String>,
+
+    #[arg(long)]
+    pub first_parent: bool,
+
+    #[arg(long)]
+    pub all: bool,
+
+    #[arg(short, long, value_enum, default_value_t)]
+    pub format: OutputFormat,
+
+    #[arg(short, long)]
+    pub output: Option<PathBuf>,
+
+    #[arg(short, long)]
+    pub config: Option<PathBuf>,
+
+    #[arg(short, long)]
+    pub severity: Option<Severity>,
+
+    #[arg(short, long, action = clap::ArgAction::Count)]
+    pub verbose: u8,
+
+    #[arg(long)]
+    pub include_low_confidence: bool,
+
+    #[arg(long)]
+    pub exit_zero: bool,
+
+    #[arg(short, long)]
+    pub exclude: Vec<String>,
+
+    #[arg(long)]
+    pub max_file_size: Option<u64>,
+
+    #[arg(long)]
+    pub concurrency: Option<usize>,
 }
 
 #[derive(Debug, Parser)]
@@ -174,6 +229,7 @@ fn run(command: Command) -> anyhow::Result<()> {
             clap_complete::generate(shell, &mut Cli::command(), "vet", &mut std::io::stdout());
             Ok(())
         }
+        Command::History(args) => commands::history::run(&args),
         Command::Hook { command } => commands::hook::run(command.as_ref()),
         Command::Init(args) => commands::init::run(args.yes, args.minimal, args.output),
         Command::Patterns(args) => {
@@ -201,6 +257,8 @@ fn build_after_help() -> String {
     vet scan .                     Scan current directory
     vet scan src/ tests/           Scan multiple paths
     vet scan . --format json       Output as JSON
+    vet history                    Scan git history
+    vet history -n 100             Scan last 100 commits
     vet init                       Create config file
 
   Learn more: {}",
