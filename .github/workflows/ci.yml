@@ -16,8 +16,8 @@ env:
   RUST_BACKTRACE: 1
 
 jobs:
-  fmt:
-    name: Format
+  check:
+    name: Check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -26,29 +26,19 @@ jobs:
       - name: Setup Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          components: rustfmt
+          components: rustfmt, clippy
 
-      - name: Format check
+      - name: Formatting
         run: cargo fmt --all -- --check
-
-  clippy:
-    name: Clippy
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Setup Rust
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          components: clippy
 
       - name: Clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
 
+      - name: Dependencies
+        uses: EmbarkStudios/cargo-deny-action@v2
+
   test:
     name: Test (${{ matrix.os }})
-    needs: [fmt, clippy]
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -61,8 +51,28 @@ jobs:
       - name: Setup Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
 
-      - name: Run tests
+      - name: Tests
         run: cargo test --all-features
+
+  build-lsp:
+    name: Build LSP
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Build LSP
+        run: cargo build --release --package vet_lsp
+
+      - name: Upload LSP binary
+        uses: actions/upload-artifact@v6
+        with:
+          name: vet-lsp-linux-x64
+          path: target/release/vet-lsp
+          retention-days: 1
 
   extension:
     name: Extension
@@ -87,15 +97,15 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
-      - name: Lint
+      - name: Biome
         run: npm run lint
 
-      - name: Test
+      - name: Tests
         run: npm test
 
   extension-e2e:
     name: Extension E2E
-    needs: [extension]
+    needs: [extension, build-lsp]
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -104,23 +114,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Setup Rust
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+      - name: Download LSP binary
+        uses: actions/download-artifact@v6
+        with:
+          name: vet-lsp-linux-x64
+          path: editors/vscode/server
 
-      - name: Build LSP
-        run: cargo build --release --package vet_lsp
-        working-directory: .
-
-      - name: Copy LSP binary
+      - name: Prepare LSP binary
         run: |
-          mkdir -p server
-          cp ../../target/release/vet-lsp server/vet-lsp-linux-x64
+          chmod +x server/vet-lsp
+          mv server/vet-lsp server/vet-lsp-linux-x64
 
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version: "22"
-          cache: "npm"
+          node-version: '22'
+          cache: 'npm'
           cache-dependency-path: editors/vscode/package-lock.json
 
       - name: Install dependencies
@@ -129,5 +138,5 @@ jobs:
       - name: Build extension
         run: npm run compile
 
-      - name: Run E2E tests
+      - name: E2E tests
         run: xvfb-run -a npm run test:e2e
