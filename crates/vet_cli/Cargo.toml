@@ -20,11 +20,13 @@ tracing = ["vet_core/tracing", "dep:tracing", "dep:tracing-subscriber"]
 
 [dependencies]
 anyhow.workspace = true
+chrono.workspace = true
 clap.workspace = true
 clap_complete.workspace = true
 console.workspace = true
 dialoguer.workspace = true
-git2.workspace = true
+gix.workspace = true
+globset.workspace = true
 ignore.workspace = true
 indicatif.workspace = true
 rayon.workspace = true

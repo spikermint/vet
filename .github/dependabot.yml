@@ -24,5 +24,5 @@ updates:
     commit-message:
       prefix: "chore(deps)"
     ignore:
-      # Must match engines.vscode — vsce validates this at package time
+      # Must match engines.vscode, vsce validates this at package time
       - dependency-name: "@types/vscode"

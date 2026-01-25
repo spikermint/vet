@@ -7,17 +7,17 @@ mod runner;
 use std::path::Path;
 use std::time::Instant;
 
-use anyhow::Context as _;
 use vet_core::prelude::*;
 
 use self::context::{ScanContext, VerboseInfo};
 use self::output::{OutputContext, ScanStats, write_output};
 use self::runner::{collect_scan_files, run_scan};
+use crate::scanning::configure_thread_pool;
 use crate::ui::{exit, print_command_header};
 use crate::{CONFIG_FILENAME, OutputFormat, ScanArgs};
 
 pub fn run(args: &ScanArgs) -> super::Result {
-    configure_thread_pool(args)?;
+    configure_thread_pool(args.concurrency)?;
 
     let show_progress = should_show_progress(args);
     let start = Instant::now();
@@ -66,16 +66,6 @@ pub fn run(args: &ScanArgs) -> super::Result {
 
     handle_exit_code(args, &findings);
 
-    Ok(())
-}
-
-fn configure_thread_pool(args: &ScanArgs) -> anyhow::Result<()> {
-    if let Some(n) = args.concurrency {
-        rayon::ThreadPoolBuilder::new()
-            .num_threads(n)
-            .build_global()
-            .context("failed to configure thread pool")?;
-    }
     Ok(())
 }
 

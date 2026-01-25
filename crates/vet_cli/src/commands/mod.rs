@@ -1,5 +1,6 @@
 //! CLI command handlers.
 
+pub mod history;
 pub mod hook;
 pub mod init;
 pub mod patterns;
