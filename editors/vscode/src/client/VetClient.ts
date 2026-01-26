@@ -1,4 +1,12 @@
-import { type ExtensionContext, type OutputChannel, workspace } from "vscode";
+import {
+	ColorThemeKind,
+	type ExtensionContext,
+	Hover,
+	MarkdownString,
+	type OutputChannel,
+	window,
+	workspace,
+} from "vscode";
 import {
 	LanguageClient,
 	type LanguageClientOptions,
@@ -7,6 +15,42 @@ import {
 import type { NotificationService } from "../services/NotificationService";
 import { resolveServerPath } from "../services/ServerResolver";
 import type { StatusBarService } from "../services/StatusBarService";
+
+type ColorToken = "danger" | "warning" | "info" | "success" | "muted";
+
+const COLOR_PALETTES: Record<
+	"dark" | "light" | "highContrastDark" | "highContrastLight",
+	Record<ColorToken, string>
+> = {
+	dark: {
+		danger: "#f14c4c",
+		warning: "#cca700",
+		info: "#3794ff",
+		success: "#89d185",
+		muted: "#8c8c8c",
+	},
+	light: {
+		danger: "#c42020",
+		warning: "#8a5700",
+		info: "#005fb8",
+		success: "#2e7d32",
+		muted: "#505050",
+	},
+	highContrastDark: {
+		danger: "#ff6b6b",
+		warning: "#ffcc00",
+		info: "#6bc5ff",
+		success: "#89ff89",
+		muted: "#d4d4d4",
+	},
+	highContrastLight: {
+		danger: "#a00000",
+		warning: "#6b4400",
+		info: "#003d7a",
+		success: "#1b5e20",
+		muted: "#3a3a3a",
+	},
+};
 
 export class VetClient {
 	private client: LanguageClient | undefined;
@@ -69,6 +113,12 @@ export class VetClient {
 			synchronize: {
 				configurationSection: "vet",
 			},
+			middleware: {
+				provideHover: async (document, position, token, next) => {
+					const hover = await next(document, position, token);
+					return hover ? this.enhanceHover(hover) : hover;
+				},
+			},
 		};
 
 		this.client = new LanguageClient(
@@ -109,6 +159,51 @@ export class VetClient {
 			await this.start();
 		} finally {
 			this.isRestarting = false;
+		}
+	}
+
+	private enhanceHover(hover: Hover): Hover {
+		const contents = hover.contents;
+
+		if (!Array.isArray(contents)) {
+			return hover;
+		}
+
+		const enhanced = contents.map((item) => {
+			const raw = typeof item === "string" ? item : item.value;
+			const value = this.replaceColorTokens(raw);
+
+			const md = new MarkdownString(value, true);
+			md.supportHtml = true;
+			md.supportThemeIcons = true;
+			md.isTrusted = true;
+			return md;
+		});
+
+		return new Hover(enhanced, hover.range);
+	}
+
+	private replaceColorTokens(value: string): string {
+		const palette = this.getColorPalette();
+
+		return value
+			.replace(/\{\{danger\}\}/g, palette.danger)
+			.replace(/\{\{warning\}\}/g, palette.warning)
+			.replace(/\{\{info\}\}/g, palette.info)
+			.replace(/\{\{success\}\}/g, palette.success)
+			.replace(/\{\{muted\}\}/g, palette.muted);
+	}
+
+	private getColorPalette(): Record<ColorToken, string> {
+		switch (window.activeColorTheme.kind) {
+			case ColorThemeKind.Light:
+				return COLOR_PALETTES.light;
+			case ColorThemeKind.HighContrast:
+				return COLOR_PALETTES.highContrastDark;
+			case ColorThemeKind.HighContrastLight:
+				return COLOR_PALETTES.highContrastLight;
+			default:
+				return COLOR_PALETTES.dark;
 		}
 	}
 
