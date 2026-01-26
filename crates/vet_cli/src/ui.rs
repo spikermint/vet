@@ -6,25 +6,47 @@ use console::Style;
 use indicatif::{ProgressBar, ProgressStyle};
 use vet_core::prelude::*;
 
+pub mod indicators {
+    pub const ERROR: &str = "✖";
+
+    pub const WARNING: &str = "⚠";
+
+    pub const INFO: &str = "ℹ";
+
+    pub const SUCCESS: &str = "✓";
+
+    pub const ADDED: &str = "+";
+}
+
 pub mod colors {
     use console::Style;
 
-    const MUTED_GRAY: u8 = 245;
-
-    pub const fn muted() -> Style {
-        Style::new().color256(MUTED_GRAY)
-    }
-
-    pub const fn success() -> Style {
-        Style::new().green()
+    pub const fn error() -> Style {
+        Style::new().red()
     }
 
     pub const fn warning() -> Style {
         Style::new().yellow()
     }
 
-    pub const fn error() -> Style {
-        Style::new().red()
+    pub const fn info() -> Style {
+        Style::new().cyan()
+    }
+
+    pub const fn success() -> Style {
+        Style::new().green()
+    }
+
+    pub const fn primary() -> Style {
+        Style::new().white().bold()
+    }
+
+    pub const fn secondary() -> Style {
+        Style::new().color256(252)
+    }
+
+    pub const fn muted() -> Style {
+        Style::new().color256(243)
     }
 
     pub const fn accent() -> Style {
@@ -34,11 +56,38 @@ pub mod colors {
     pub const fn emphasis() -> Style {
         Style::new().white()
     }
+
+    pub const fn line_number() -> Style {
+        Style::new().color256(243)
+    }
+
+    pub const fn code() -> Style {
+        Style::new().color256(252)
+    }
 }
 
 pub mod exit {
     pub const FINDINGS: i32 = 1;
     pub const ERROR: i32 = 2;
+}
+
+const SEVERITY_CRITICAL_COLOR: u8 = 196;
+const SEVERITY_HIGH_COLOR: u8 = 208;
+const SEVERITY_MEDIUM_COLOR: u8 = 220;
+const SEVERITY_LOW_COLOR: u8 = 75;
+
+pub const fn severity_style(severity: Severity) -> Style {
+    match severity {
+        Severity::Critical => Style::new().color256(SEVERITY_CRITICAL_COLOR).bold(),
+        Severity::High => Style::new().color256(SEVERITY_HIGH_COLOR),
+        Severity::Medium => Style::new().color256(SEVERITY_MEDIUM_COLOR),
+        Severity::Low => Style::new().color256(SEVERITY_LOW_COLOR),
+    }
+}
+
+#[must_use]
+pub fn severity_indicator(severity: Severity) -> String {
+    severity_style(severity).apply_to(indicators::ERROR).to_string()
 }
 
 pub fn print_command_header(command: &str) {
@@ -64,16 +113,24 @@ pub fn print_hint(command: &str, description: &str) {
 pub fn print_error(message: &str) {
     eprintln!(
         "{} {}",
-        colors::error().apply_to("✗"),
-        colors::muted().apply_to(message)
+        colors::error().apply_to(indicators::ERROR),
+        colors::secondary().apply_to(message)
     );
 }
 
 pub fn print_warning(message: &str) {
     eprintln!(
         "{} {}",
-        colors::warning().apply_to("⚠"),
-        colors::muted().apply_to(message)
+        colors::warning().apply_to(indicators::WARNING),
+        colors::secondary().apply_to(message)
+    );
+}
+
+pub fn print_info(message: &str) {
+    println!(
+        "{} {}",
+        colors::info().apply_to(indicators::INFO),
+        colors::secondary().apply_to(message)
     );
 }
 
@@ -102,7 +159,7 @@ pub fn create_file_progress(total: usize) -> ProgressBar {
     #[allow(clippy::expect_used)] // Static template string; failure is a programmer error
     pb.set_style(
         ProgressStyle::default_bar()
-            .template("{bar:40.cyan/dim} {percent:>3}% {pos}/{len} files ({elapsed} elapsed)")
+            .template("{bar:40.cyan/243} {percent:>3}% {pos}/{len} files ({elapsed} elapsed)")
             .expect("invalid progress template")
             .progress_chars("━━╸"),
     );
@@ -118,27 +175,13 @@ pub fn create_commit_progress(total: usize) -> ProgressBar {
     #[allow(clippy::expect_used)] // Static template string; failure is a programmer error
     pb.set_style(
         ProgressStyle::default_bar()
-            .template("{bar:40.cyan/dim} {percent:>3}% {pos}/{len} commits ({elapsed} elapsed)")
+            .template("{bar:40.cyan/243} {percent:>3}% {pos}/{len} commits ({elapsed} elapsed)")
             .expect("invalid progress template")
             .progress_chars("━━╸"),
     );
 
     pb.enable_steady_tick(Duration::from_millis(PROGRESS_TICK_MS));
     pb
-}
-
-const SEVERITY_CRITICAL_COLOR: u8 = 196;
-const SEVERITY_HIGH_COLOR: u8 = 208;
-const SEVERITY_MEDIUM_COLOR: u8 = 220;
-const SEVERITY_LOW_COLOR: u8 = 75;
-
-pub const fn severity_style(severity: Severity) -> Style {
-    match severity {
-        Severity::Critical => Style::new().color256(SEVERITY_CRITICAL_COLOR).bold(),
-        Severity::High => Style::new().color256(SEVERITY_HIGH_COLOR),
-        Severity::Medium => Style::new().color256(SEVERITY_MEDIUM_COLOR),
-        Severity::Low => Style::new().color256(SEVERITY_LOW_COLOR),
-    }
 }
 
 #[derive(Debug, Default)]
@@ -199,9 +242,12 @@ fn format_severity_counts(counts: &SeverityCounts) -> String {
 }
 
 fn format_count(count: usize, label: &str, severity: Severity) -> String {
-    severity_style(severity)
-        .apply_to(format!("{count} {label}"))
-        .to_string()
+    format!(
+        "{} {} {}",
+        severity_indicator(severity),
+        colors::secondary().apply_to(count),
+        colors::muted().apply_to(label)
+    )
 }
 
 const MICROSECOND_NS: u128 = 1_000;
@@ -229,16 +275,16 @@ pub fn clap_styles() -> clap::builder::Styles {
     clap::builder::Styles::styled()
         .header(
             Style::new()
-                .fg_color(Some(AnsiColor::Magenta.into()))
+                .fg_color(Some(AnsiColor::Cyan.into()))
                 .effects(Effects::BOLD),
         )
         .usage(
             Style::new()
-                .fg_color(Some(AnsiColor::Magenta.into()))
+                .fg_color(Some(AnsiColor::Cyan.into()))
                 .effects(Effects::BOLD),
         )
         .literal(Style::new().fg_color(Some(AnsiColor::Cyan.into())))
-        .placeholder(Style::new().fg_color(Some(AnsiColor::Green.into())))
+        .placeholder(Style::new().fg_color(Some(AnsiColor::BrightBlack.into())))
         .valid(Style::new().fg_color(Some(AnsiColor::Green.into())))
         .invalid(Style::new().fg_color(Some(AnsiColor::Red.into())))
         .error(
@@ -246,4 +292,39 @@ pub fn clap_styles() -> clap::builder::Styles {
                 .fg_color(Some(AnsiColor::Red.into()))
                 .effects(Effects::BOLD),
         )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_indicators_are_single_chars() {
+        assert_eq!(indicators::ERROR.chars().count(), 1);
+        assert_eq!(indicators::WARNING.chars().count(), 1);
+        assert_eq!(indicators::INFO.chars().count(), 1);
+        assert_eq!(indicators::SUCCESS.chars().count(), 1);
+        assert_eq!(indicators::ADDED.chars().count(), 1);
+    }
+
+    #[test]
+    fn test_pluralise_word() {
+        assert_eq!(pluralise_word(0, "secret", "secrets"), "secrets");
+        assert_eq!(pluralise_word(1, "secret", "secrets"), "secret");
+        assert_eq!(pluralise_word(2, "secret", "secrets"), "secrets");
+    }
+
+    #[test]
+    fn test_truncate_with_ellipsis() {
+        assert_eq!(truncate_with_ellipsis("short", 10), "short");
+        assert_eq!(truncate_with_ellipsis("longer text", 6), "longe…");
+    }
+
+    #[test]
+    fn test_format_duration() {
+        assert_eq!(format_duration(Duration::from_nanos(500)), "500ns");
+        assert_eq!(format_duration(Duration::from_micros(500)), "500.0µs");
+        assert_eq!(format_duration(Duration::from_millis(500)), "500.0ms");
+        assert_eq!(format_duration(Duration::from_secs(2)), "2.00s");
+    }
 }

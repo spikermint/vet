@@ -10,7 +10,7 @@ use dialoguer::{Confirm, Select};
 use super::detection::{collect_excludes, detect_projects};
 use super::templates::{PRECOMMIT_HOOK_PATH, VET_HOOK_MARKER};
 use crate::git;
-use crate::ui::colors;
+use crate::ui::{colors, indicators};
 
 const SEVERITY_OPTIONS: &[&str] = &["low", "medium", "high", "critical"];
 
@@ -67,15 +67,15 @@ fn print_detected_projects(projects: &[&super::detection::ProjectType], excludes
 
     println!(
         "{} {} {}",
-        colors::warning().apply_to("●"),
-        colors::muted().apply_to("detected"),
+        colors::info().apply_to(indicators::INFO),
+        colors::secondary().apply_to("detected"),
         style(names.join(", ")).bold()
     );
 
     println!(
         "{} {} {}",
-        colors::warning().apply_to("●"),
-        colors::muted().apply_to("excludes"),
+        colors::info().apply_to(indicators::INFO),
+        colors::secondary().apply_to("excludes"),
         format_excludes_preview(excludes)
     );
 }
@@ -121,8 +121,8 @@ fn prompt_hook_install() -> anyhow::Result<bool> {
         if content.contains(VET_HOOK_MARKER) {
             println!(
                 "{} {}",
-                colors::success().apply_to("✓"),
-                colors::muted().apply_to("pre-commit already installed")
+                colors::success().apply_to(indicators::SUCCESS),
+                colors::secondary().apply_to("pre-commit already installed")
             );
             return Ok(false);
         }
@@ -131,7 +131,7 @@ fn prompt_hook_install() -> anyhow::Result<bool> {
             println!(
                 "{} {}",
                 colors::muted().apply_to("○"),
-                colors::muted().apply_to("pre-commit skipped (external hook exists)")
+                colors::secondary().apply_to("pre-commit skipped (external hook exists)")
             );
             return Ok(false);
         }

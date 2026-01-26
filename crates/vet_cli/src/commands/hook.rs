@@ -7,7 +7,7 @@ use anyhow::Context;
 use super::init::templates::{PRECOMMIT_HOOK_PATH, VET_HOOK_MARKER, install_hook};
 use crate::HookCommand;
 use crate::git;
-use crate::ui::{colors, exit, print_command_header, print_hint};
+use crate::ui::{colors, exit, indicators, print_command_header, print_hint, print_info};
 
 pub fn run(command: Option<&HookCommand>) -> super::Result {
     let hook_path = Path::new(PRECOMMIT_HOOK_PATH);
@@ -27,7 +27,7 @@ fn show_status(hook_path: &Path) -> super::Result {
             println!(
                 "{} {}",
                 colors::muted().apply_to("○"),
-                colors::muted().apply_to("no hook installed")
+                colors::secondary().apply_to("no hook installed")
             );
             println!();
             print_hint("vet hook install", "Install pre-commit hook");
@@ -35,8 +35,8 @@ fn show_status(hook_path: &Path) -> super::Result {
         HookStatus::ManagedByVet => {
             println!(
                 "{} {}",
-                colors::success().apply_to("✓"),
-                colors::muted().apply_to("pre-commit installed")
+                colors::success().apply_to(indicators::SUCCESS),
+                colors::secondary().apply_to("pre-commit installed")
             );
             println!();
             print_hint("vet hook uninstall", "Remove hook");
@@ -44,15 +44,11 @@ fn show_status(hook_path: &Path) -> super::Result {
         HookStatus::ExternalHook => {
             println!(
                 "{} {}",
-                colors::warning().apply_to("●"),
-                colors::muted().apply_to("external hook (not managed by vet)")
+                colors::warning().apply_to(indicators::WARNING),
+                colors::secondary().apply_to("external hook (not managed by vet)")
             );
             println!();
-            println!(
-                "  {} {}",
-                colors::muted().apply_to("Add to your pre-commit hook:"),
-                colors::emphasis().apply_to("vet scan --staged")
-            );
+            print_info("Add to your pre-commit hook: `vet scan --staged`");
         }
     }
 
@@ -106,8 +102,8 @@ fn verify_git_repository() -> anyhow::Result<()> {
 
     println!(
         "{} {}",
-        colors::error().apply_to("✗"),
-        colors::muted().apply_to("not a git repository")
+        colors::error().apply_to(indicators::ERROR),
+        colors::secondary().apply_to("not a git repository")
     );
     std::process::exit(exit::ERROR)
 }
@@ -115,7 +111,7 @@ fn verify_git_repository() -> anyhow::Result<()> {
 fn print_created(hook_path: &Path) {
     println!(
         "{} {}",
-        colors::success().apply_to("+"),
+        colors::success().apply_to(indicators::ADDED),
         colors::emphasis().apply_to(hook_path.display())
     );
 }
@@ -123,27 +119,28 @@ fn print_created(hook_path: &Path) {
 fn print_already_installed() {
     println!(
         "{} {}",
-        colors::success().apply_to("✓"),
-        colors::muted().apply_to("pre-commit already installed")
+        colors::success().apply_to(indicators::SUCCESS),
+        colors::secondary().apply_to("pre-commit already installed")
     );
 }
 
 fn external_hook_error() -> ! {
     println!(
         "{} {} {}",
-        colors::error().apply_to("✗"),
-        colors::muted().apply_to("external hook exists at"),
+        colors::error().apply_to(indicators::ERROR),
+        colors::secondary().apply_to("external hook exists at"),
         colors::emphasis().apply_to(PRECOMMIT_HOOK_PATH)
     );
     println!();
     println!(
         "  {} {}",
-        colors::muted().apply_to("Add to your existing hook:"),
-        colors::emphasis().apply_to("vet scan --staged")
+        colors::info().apply_to(indicators::INFO),
+        colors::secondary().apply_to("Add to your existing hook: `vet scan --staged`")
     );
     println!(
-        "  {}",
-        colors::muted().apply_to("Or remove it first to let vet manage the hook.")
+        "  {} {}",
+        colors::info().apply_to(indicators::INFO),
+        colors::secondary().apply_to("Or remove it first to let vet manage the hook")
     );
 
     std::process::exit(exit::ERROR)
@@ -153,15 +150,15 @@ fn print_no_hook() {
     println!(
         "{} {}",
         colors::muted().apply_to("○"),
-        colors::muted().apply_to("no hook installed")
+        colors::secondary().apply_to("no hook installed")
     );
 }
 
 fn print_removed(hook_path: &Path) {
     println!(
         "{} {} {}",
-        colors::success().apply_to("✓"),
-        colors::muted().apply_to("removed"),
+        colors::success().apply_to(indicators::SUCCESS),
+        colors::secondary().apply_to("removed"),
         colors::emphasis().apply_to(hook_path.display())
     );
 }
@@ -169,8 +166,8 @@ fn print_removed(hook_path: &Path) {
 fn not_managed_error() -> ! {
     println!(
         "{} {}",
-        colors::error().apply_to("✗"),
-        colors::muted().apply_to("hook not managed by vet")
+        colors::error().apply_to(indicators::ERROR),
+        colors::secondary().apply_to("hook not managed by vet")
     );
 
     std::process::exit(exit::ERROR)

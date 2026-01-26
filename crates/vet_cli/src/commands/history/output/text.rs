@@ -8,7 +8,7 @@ use vet_core::prelude::*;
 
 use super::OutputContext;
 use crate::commands::history::HistoryFinding;
-use crate::ui::{self, colors, format_duration, truncate_with_ellipsis};
+use crate::ui::{self, colors, format_duration, indicators, severity_indicator, truncate_with_ellipsis};
 
 pub fn write(ctx: &OutputContext, writer: &mut dyn Write) -> anyhow::Result<()> {
     if ctx.findings.is_empty() {
@@ -44,7 +44,7 @@ fn write_finding(finding: &HistoryFinding, patterns: &[Pattern], writer: &mut dy
     writeln!(
         writer,
         "{} {} {} {}",
-        ui::severity_style(finding.finding.severity).apply_to("●"),
+        severity_indicator(finding.finding.severity),
         style(pattern_name).bold(),
         colors::muted().apply_to("·"),
         ui::severity_style(finding.finding.severity).apply_to(&severity),
@@ -54,13 +54,13 @@ fn write_finding(finding: &HistoryFinding, patterns: &[Pattern], writer: &mut dy
         writer,
         "  {} {}",
         colors::emphasis().apply_to(&commit.short_hash),
-        truncate_with_ellipsis(&commit.message, 50),
+        colors::secondary().apply_to(truncate_with_ellipsis(&commit.message, 50)),
     )?;
 
     writeln!(
         writer,
         "  {} {} {}",
-        commit.date.with_timezone(&Local).format("%Y-%m-%d"),
+        colors::secondary().apply_to(commit.date.with_timezone(&Local).format("%Y-%m-%d").to_string()),
         colors::muted().apply_to("·"),
         colors::muted().apply_to(&commit.author_email),
     )?;
@@ -69,15 +69,11 @@ fn write_finding(finding: &HistoryFinding, patterns: &[Pattern], writer: &mut dy
         writer,
         "  {} {}:{}",
         colors::muted().apply_to("└─"),
-        finding.introduced_in.path.display(),
+        colors::secondary().apply_to(finding.introduced_in.path.display().to_string()),
         finding.introduced_in.line,
     )?;
 
-    writeln!(
-        writer,
-        "     {}",
-        colors::muted().apply_to(&finding.finding.masked_line)
-    )?;
+    writeln!(writer, "     {}", colors::code().apply_to(&finding.finding.masked_line))?;
 
     writeln!(writer)?;
     Ok(())
@@ -93,7 +89,7 @@ fn write_finding_grouped(finding: &HistoryFinding, patterns: &[Pattern], writer:
     writeln!(
         writer,
         "{} {} {} {} {} {}",
-        ui::severity_style(finding.finding.severity).apply_to("●"),
+        severity_indicator(finding.finding.severity),
         style(pattern_name).bold(),
         colors::muted().apply_to("·"),
         ui::severity_style(finding.finding.severity).apply_to(&severity),
@@ -101,7 +97,7 @@ fn write_finding_grouped(finding: &HistoryFinding, patterns: &[Pattern], writer:
         colors::muted().apply_to(&occurrence_text),
     )?;
 
-    writeln!(writer, "  {}", colors::muted().apply_to(&finding.finding.masked_line))?;
+    writeln!(writer, "  {}", colors::code().apply_to(&finding.finding.masked_line))?;
 
     let mut all = vec![&finding.introduced_in];
     all.extend(finding.occurrences.iter());
@@ -125,10 +121,10 @@ fn write_finding_grouped(finding: &HistoryFinding, patterns: &[Pattern], writer:
             "  {} {} {}:{} {} {}{}",
             colors::muted().apply_to(prefix),
             colors::emphasis().apply_to(&occ.commit.short_hash),
-            occ.path.display(),
+            colors::secondary().apply_to(occ.path.display().to_string()),
             occ.line,
             colors::muted().apply_to("·"),
-            occ.commit.date.with_timezone(&Local).format("%Y-%m-%d"),
+            colors::secondary().apply_to(occ.commit.date.with_timezone(&Local).format("%Y-%m-%d").to_string()),
             marker,
         )?;
     }
@@ -145,8 +141,8 @@ fn write_summary(ctx: &OutputContext, writer: &mut dyn Write) -> anyhow::Result<
         writeln!(
             writer,
             "{} {} {} {} {}",
-            colors::success().apply_to("✓"),
-            colors::muted().apply_to("no secrets"),
+            colors::success().apply_to(indicators::SUCCESS),
+            colors::primary().apply_to("No secrets found"),
             colors::muted().apply_to("·"),
             colors::muted().apply_to(&commits),
             colors::muted().apply_to(&timing),
@@ -171,8 +167,8 @@ fn write_summary(ctx: &OutputContext, writer: &mut dyn Write) -> anyhow::Result<
     writeln!(
         writer,
         "{} {} {} {}{} {} {} {}",
-        colors::error().apply_to("●"),
-        style(format!("{count} {secrets_word}")).bold(),
+        colors::error().apply_to(indicators::ERROR),
+        colors::primary().apply_to(format!("{count} {secrets_word} found")),
         colors::muted().apply_to("·"),
         occurrence_part,
         severity_summary,
