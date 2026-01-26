@@ -1,4 +1,16 @@
 # vet
+## 0.2.0 (2026-01-26)
+
+### Breaking Changes
+
+- add `history` command (#29)
+
+### Features
+
+- update CLI output for consistency (#33)
+- add context aware remediation and debouncing (#34)
+- update hover styling in vscode (#35)
+
 ## 0.1.12 (2026-01-24)
 
 ### Fixes
