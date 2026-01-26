@@ -40,12 +40,21 @@ export class VetClient {
 
 		this.log(`Using server: ${resolution.path}`);
 
+		const config = workspace.getConfiguration("vet");
+		const logLevel = config.get<string>("logLevel", "info");
+
+		this.log(`Log level: ${logLevel}`);
+
 		const serverOptions: ServerOptions = {
 			command: resolution.path,
 			args: [],
+			options: {
+				env: {
+					...process.env,
+					RUST_LOG: logLevel,
+				},
+			},
 		};
-
-		const config = workspace.getConfiguration("vet");
 
 		const clientOptions: LanguageClientOptions = {
 			documentSelector: [{ scheme: "file" }, { scheme: "untitled" }],

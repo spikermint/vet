@@ -3,7 +3,7 @@
 use std::path::Path;
 
 #[cfg(feature = "tracing")]
-use tracing::{debug, instrument, trace};
+use tracing::{debug, trace};
 
 use crate::binary::is_binary_content;
 use crate::entropy::shannon_entropy;
@@ -58,7 +58,6 @@ impl Scanner {
         findings
     }
 
-    #[cfg_attr(feature = "tracing", instrument(skip(self, content, findings), fields(path = %path.display())))]
     pub fn scan_content_into(&self, content: &str, path: &Path, findings: &mut Vec<Finding>) {
         if is_binary_content(content) {
             #[cfg(feature = "tracing")]
@@ -74,15 +73,7 @@ impl Scanner {
             trace!(patterns_checked = active_count, size = content.len(), "scanning");
         }
 
-        #[cfg(feature = "tracing")]
-        let before = findings.len();
-
         self.run_patterns_into(content, path, &patterns_to_check, findings);
-
-        #[cfg(feature = "tracing")]
-        if findings.len() > before {
-            debug!(new_findings = findings.len() - before, "secrets detected");
-        }
     }
 
     fn select_patterns_to_run(&self, content: &str) -> Vec<bool> {

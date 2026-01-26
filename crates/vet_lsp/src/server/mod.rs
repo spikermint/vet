@@ -7,6 +7,7 @@ mod workspace;
 use std::sync::Arc;
 
 use tokio::sync::RwLock;
+use tokio::sync::mpsc::UnboundedReceiver;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::lsp_types::{
     CodeActionParams, CodeActionProviderCapability, CodeActionResponse, DidChangeConfigurationParams,
@@ -22,23 +23,33 @@ use tracing::{debug, info, warn};
 use vet_core::CONFIG_FILENAME;
 
 use crate::code_actions::actions_for_diagnostics;
+use crate::debounce::{self, Debouncer, ScanRequest};
+use crate::git::{ExposureRisk, GitContext};
 use crate::hover::pattern_hover;
 use crate::state::ServerState;
 use crate::uri::{extract_workspace_roots, try_uri_to_path};
 
+use scanning::ScanTrigger;
+
 const CONFIG_WATCHER_ID: &str = "config-watcher";
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VetLanguageServer {
     pub(super) client: Client,
     pub(super) state: Arc<RwLock<ServerState>>,
+    pub(super) debouncer: Debouncer,
+    scan_rx: Arc<RwLock<Option<UnboundedReceiver<ScanRequest>>>>,
 }
 
 impl VetLanguageServer {
     pub fn new(client: Client) -> Self {
+        let (debouncer, scan_rx) = debounce::spawn();
+
         Self {
             client,
             state: Arc::new(RwLock::new(ServerState::new())),
+            debouncer,
+            scan_rx: Arc::new(RwLock::new(Some(scan_rx))),
         }
     }
 }
@@ -46,6 +57,8 @@ impl VetLanguageServer {
 #[tower_lsp::async_trait]
 impl LanguageServer for VetLanguageServer {
     async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
+        info!("vet-lsp v{}", env!("CARGO_PKG_VERSION"));
+
         let roots = extract_workspace_roots(&params);
         info!("Initialising with {} workspace root(s)", roots.len());
 
@@ -64,6 +77,8 @@ impl LanguageServer for VetLanguageServer {
         if let Err(e) = self.register_file_watchers().await {
             warn!("Failed to register file watchers: {e}");
         }
+
+        self.start_scan_handler().await;
     }
 
     async fn shutdown(&self) -> Result<()> {
@@ -128,7 +143,15 @@ impl LanguageServer for VetLanguageServer {
             return Ok(None);
         };
 
-        Ok(Some(pattern_hover(pattern, diagnostic.range)))
+        let exposure = determine_exposure_risk(
+            &state,
+            uri,
+            diagnostic.range.start.line,
+            diagnostic.range.start.character,
+            diagnostic.range.end.character,
+        );
+
+        Ok(Some(pattern_hover(pattern, diagnostic.range, exposure)))
     }
 
     async fn did_change_workspace_folders(&self, params: DidChangeWorkspaceFoldersParams) {
@@ -217,9 +240,65 @@ impl LanguageServer for VetLanguageServer {
         };
 
         for (uri, content) in documents_to_rescan {
-            self.scan_document(&uri, &content).await;
+            self.scan_document(&uri, &content, ScanTrigger::ConfigChange).await;
         }
     }
+}
+
+fn determine_exposure_risk(
+    state: &ServerState,
+    uri: &tower_lsp::lsp_types::Url,
+    line: u32,
+    start_char: u32,
+    end_char: u32,
+) -> ExposureRisk {
+    let file_path = match try_uri_to_path(uri) {
+        Some(p) => p,
+        None => {
+            debug!("Git check: could not resolve file path");
+            return ExposureRisk::Unknown;
+        }
+    };
+
+    let document = match state.get_document(uri) {
+        Some(d) => d,
+        None => {
+            debug!("Git check: document not found in state");
+            return ExposureRisk::Unknown;
+        }
+    };
+
+    let secret = match document.extract_range(line, start_char, end_char) {
+        Some(s) => s,
+        None => {
+            debug!("Git check: could not extract secret from range");
+            return ExposureRisk::Unknown;
+        }
+    };
+
+    let workspace_root = match state.primary_workspace_root() {
+        Some(r) => r,
+        None => {
+            debug!("Git check: no workspace root");
+            return ExposureRisk::Unknown;
+        }
+    };
+
+    let git_context = match GitContext::discover(workspace_root) {
+        Some(ctx) => ctx,
+        None => {
+            debug!("Git check: not a git repository");
+            return ExposureRisk::Unknown;
+        }
+    };
+
+    let exposure = git_context.check_secret_exposure(&file_path, &secret);
+
+    let filename = file_path.file_name().map(|s| s.to_string_lossy()).unwrap_or_default();
+
+    debug!("Git check: {} -> {:?}", filename, exposure);
+
+    exposure
 }
 
 impl VetLanguageServer {
@@ -246,6 +325,27 @@ impl VetLanguageServer {
         };
 
         self.client.register_capability(vec![registration]).await
+    }
+
+    async fn start_scan_handler(&self) {
+        let scan_rx = self.scan_rx.write().await.take();
+
+        let Some(mut rx) = scan_rx else {
+            warn!("Scan handler already started");
+            return;
+        };
+
+        let server = self.clone();
+
+        tokio::spawn(async move {
+            while let Some(request) = rx.recv().await {
+                server
+                    .scan_document(&request.uri, &request.content, ScanTrigger::Debounce)
+                    .await;
+            }
+        });
+
+        debug!("Scan handler started");
     }
 }
 
