@@ -73,6 +73,7 @@ impl std::fmt::Debug for GitContext {
 }
 
 #[cfg(test)]
+#[allow(clippy::expect_used)]
 mod tests {
     use std::fs;
     use std::process::Command;

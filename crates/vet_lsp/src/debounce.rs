@@ -31,7 +31,7 @@ impl Debouncer {
 }
 
 fn filename_from_uri(uri: &Url) -> &str {
-    uri.path_segments().and_then(|s| s.last()).unwrap_or("unknown")
+    uri.path_segments().and_then(|mut s| s.next_back()).unwrap_or("unknown")
 }
 
 struct PendingDocument {
@@ -96,6 +96,7 @@ async fn debounce_worker(
 }
 
 #[cfg(test)]
+#[allow(clippy::expect_used)]
 mod tests {
     use super::*;
 

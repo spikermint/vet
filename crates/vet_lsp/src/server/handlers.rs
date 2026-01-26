@@ -1,7 +1,7 @@
 //! Document lifecycle event handlers.
 
 use tower_lsp::lsp_types::{
-    DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams,
+    DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams, Url,
 };
 use tracing::{debug, info};
 
@@ -9,15 +9,17 @@ use super::VetLanguageServer;
 use super::scanning::ScanTrigger;
 use crate::state::OpenDocument;
 
+fn filename_from_uri(uri: &Url) -> &str {
+    uri.path_segments().and_then(|mut s| s.next_back()).unwrap_or("unknown")
+}
+
 impl VetLanguageServer {
     pub(super) async fn handle_did_open(&self, params: DidOpenTextDocumentParams) {
         let uri = params.text_document.uri.clone();
         let content = params.text_document.text.clone();
         let language_id = params.text_document.language_id.clone();
 
-        let filename = uri.path_segments().and_then(|s| s.last()).unwrap_or("unknown");
-
-        info!("Opened {filename} ({language_id})");
+        info!("Opened {} ({language_id})", filename_from_uri(&uri));
 
         self.state
             .write()
@@ -31,9 +33,7 @@ impl VetLanguageServer {
     pub(super) async fn handle_did_save(&self, params: DidSaveTextDocumentParams) {
         let uri = params.text_document.uri;
 
-        let filename = uri.path_segments().and_then(|s| s.last()).unwrap_or("unknown");
-
-        debug!("Saved {filename}");
+        debug!("Saved {}", filename_from_uri(&uri));
 
         if let Some(content) = params.text {
             let mut state = self.state.write().await;
@@ -46,11 +46,9 @@ impl VetLanguageServer {
     pub(super) async fn handle_did_change(&self, params: DidChangeTextDocumentParams) {
         let uri = params.text_document.uri.clone();
 
-        let filename = uri.path_segments().and_then(|s| s.last()).unwrap_or("unknown");
+        debug!("Changed {}", filename_from_uri(&uri));
 
-        debug!("Changed {filename}");
-
-        let Some(change) = params.content_changes.into_iter().last() else {
+        let Some(change) = params.content_changes.into_iter().next_back() else {
             return;
         };
 
@@ -69,9 +67,7 @@ impl VetLanguageServer {
     pub(super) async fn handle_did_close(&self, params: DidCloseTextDocumentParams) {
         let uri = &params.text_document.uri;
 
-        let filename = uri.path_segments().and_then(|s| s.last()).unwrap_or("unknown");
-
-        debug!("Closed {filename}");
+        debug!("Closed {}", filename_from_uri(uri));
 
         {
             let mut state = self.state.write().await;
