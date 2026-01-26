@@ -102,7 +102,7 @@ fn history_no_secrets_returns_success() {
         .current_dir(dir.path())
         .assert()
         .success()
-        .stdout(predicate::str::contains("no secrets"));
+        .stdout(predicate::str::contains("No secrets"));
 }
 
 #[test]
@@ -125,7 +125,7 @@ fn history_limit_flag() {
         .current_dir(dir.path())
         .assert()
         .success()
-        .stdout(predicate::str::contains("no secrets"));
+        .stdout(predicate::str::contains("No secrets"));
 }
 
 #[test]

@@ -11,7 +11,7 @@ use console::style;
 
 use self::templates::{DEFAULT_SEVERITY, PRECOMMIT_HOOK_PATH};
 use crate::CONFIG_FILENAME;
-use crate::ui::{colors, format_duration, print_command_header};
+use crate::ui::{colors, format_duration, indicators, print_command_header, print_info};
 
 pub fn run(non_interactive: bool, minimal: bool, output_path: Option<PathBuf>) -> super::Result {
     print_command_header("init");
@@ -54,12 +54,15 @@ fn interactive() -> anyhow::Result<InitOptions> {
 fn handle_existing(path: &Path, non_interactive: bool) -> anyhow::Result<bool> {
     println!(
         "{} {} already exists",
-        colors::warning().apply_to("●"),
+        colors::warning().apply_to(indicators::WARNING),
         style(path.display()).bold()
     );
 
     if non_interactive {
-        println!("{}", colors::muted().apply_to("  use interactive mode to overwrite"));
+        println!(
+            "  {}",
+            colors::secondary().apply_to("use interactive mode to overwrite")
+        );
         println!();
         return Ok(false);
     }
@@ -98,7 +101,7 @@ fn print_results(config_path: &Path, config_elapsed: std::time::Duration, hook_e
     println!();
     println!(
         "{} {} {}",
-        colors::success().apply_to("+"),
+        colors::success().apply_to(indicators::ADDED),
         style(config_path.display()).bold(),
         colors::muted().apply_to(format!("({})", format_duration(config_elapsed)))
     );
@@ -106,16 +109,12 @@ fn print_results(config_path: &Path, config_elapsed: std::time::Duration, hook_e
     if let Some(elapsed) = hook_elapsed {
         println!(
             "{} {} {}",
-            colors::success().apply_to("+"),
+            colors::success().apply_to(indicators::ADDED),
             style(PRECOMMIT_HOOK_PATH).bold(),
             colors::muted().apply_to(format!("({})", format_duration(elapsed)))
         );
     }
 
     println!();
-    println!(
-        "{} {}",
-        colors::accent().apply_to("→"),
-        colors::accent().apply_to("vet scan .")
-    );
+    print_info("Run `vet scan .` to scan your project");
 }

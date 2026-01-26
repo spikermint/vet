@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use console::style;
 use vet_core::prelude::*;
 
-use crate::ui::{colors, print_command_header, severity_style, truncate_with_ellipsis};
+use crate::ui::{colors, indicators, print_command_header, severity_indicator, severity_style, truncate_with_ellipsis};
 
 const NAME_TRUNCATE_WIDTH: usize = 35;
 const DESCRIPTION_WIDTH: usize = 60;
@@ -81,13 +81,13 @@ fn print_no_matches(group: Option<&str>, severity: Option<&str>) {
         println!(
             "{} {}",
             colors::muted().apply_to("○"),
-            colors::muted().apply_to("no patterns")
+            colors::secondary().apply_to("no patterns")
         );
     } else {
         println!(
             "{} {} {}",
             colors::muted().apply_to("○"),
-            colors::muted().apply_to("no patterns match"),
+            colors::secondary().apply_to("no patterns match"),
             colors::emphasis().apply_to(filters.join(" "))
         );
     }
@@ -151,7 +151,7 @@ fn print_pattern_row(pattern: &Pattern) {
     println!(
         "  {}  {}",
         colors::accent().apply_to(&pattern.id),
-        colors::muted().apply_to(truncate_with_ellipsis(&pattern.name, NAME_TRUNCATE_WIDTH))
+        colors::secondary().apply_to(truncate_with_ellipsis(&pattern.name, NAME_TRUNCATE_WIDTH))
     );
 }
 
@@ -168,7 +168,7 @@ fn print_pattern_detail(pattern: &Pattern) {
     println!();
     println!(
         "{} {} {} {} {} {}",
-        sev_style.apply_to("●"),
+        severity_indicator(pattern.severity),
         style(&pattern.id).bold(),
         colors::muted().apply_to("·"),
         sev_style.apply_to(&severity_label),
@@ -177,7 +177,7 @@ fn print_pattern_detail(pattern: &Pattern) {
     );
 
     for line in wrap_text(&pattern.description, DESCRIPTION_WIDTH) {
-        println!("  {}", colors::muted().apply_to(&line));
+        println!("  {}", colors::secondary().apply_to(&line));
     }
 
     if let Some(ref remediation) = pattern.remediation {
@@ -185,8 +185,8 @@ fn print_pattern_detail(pattern: &Pattern) {
         let trimmed = first_line.trim_start_matches(|c: char| c.is_ascii_digit() || c == '.' || c == ' ');
         println!(
             "  {} {}",
-            colors::muted().apply_to("→"),
-            colors::muted().apply_to(trimmed)
+            colors::info().apply_to(indicators::INFO),
+            colors::secondary().apply_to(trimmed)
         );
     }
 }
