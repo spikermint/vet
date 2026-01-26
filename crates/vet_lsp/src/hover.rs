@@ -22,45 +22,100 @@ pub fn pattern_hover(pattern: &Pattern, range: Range, exposure: ExposureRisk) ->
 }
 
 fn format_pattern_markdown(pattern: &Pattern, exposure: ExposureRisk) -> String {
-    let mut sections = Vec::new();
+    let mut lines = Vec::new();
 
-    sections.push(format!("## {}", pattern.name));
-    sections.push(String::new());
-    sections.push(pattern.description.to_string());
-    sections.push(String::new());
+    lines.push(format!(
+        "$(key) **{}** — {} **<span style=\"color:{};\">{}</span>**",
+        pattern.name,
+        severity_icon(pattern.severity),
+        severity_color(pattern.severity),
+        format_severity(pattern.severity),
+    ));
+    lines.push(String::new());
 
-    sections.push(format!("**{}** severity", format_severity(pattern.severity)));
-    sections.push(String::new());
+    lines.push(pattern.description.to_string());
+    lines.push(String::new());
+    lines.push("---".to_string());
 
     if let Some(remediation) = &pattern.remediation {
-        sections.push("---".to_string());
-        sections.push(String::new());
-        sections.push(format_remediation(remediation, exposure));
-        sections.push(String::new());
+        lines.push(String::new());
+        lines.push(format_remediation(remediation, exposure));
+        lines.push(String::new());
+        lines.push("---".to_string());
     }
 
-    sections.push("---".to_string());
-    sections.push(String::new());
-    sections.push(format!("`{}`", pattern.id));
+    lines.push(String::new());
+    lines.push(format!("`{}`", pattern.id));
 
-    sections.join("\n")
+    lines.join("\n")
 }
 
 fn format_remediation(remediation: &str, exposure: ExposureRisk) -> String {
     match exposure {
-        ExposureRisk::InHistory => {
-            format!("**⚠️ This secret is in your git history.**\n\n{remediation}")
+        ExposureRisk::InHistory => format_alert_in_history(remediation),
+        ExposureRisk::NotInHistory => format_alert_not_in_history(),
+        ExposureRisk::Unknown => format_alert_unknown(remediation),
+    }
+}
+
+fn format_alert_in_history(remediation: &str) -> String {
+    format_alert(
+        "$(alert)",
+        "{{danger}}",
+        "This secret is in your git history.",
+        remediation,
+    )
+}
+
+fn format_alert_not_in_history() -> String {
+    format_alert(
+        "$(shield)",
+        "{{info}}",
+        "Remove before committing",
+        "Use environment variables or a secrets manager instead.",
+    )
+}
+
+fn format_alert_unknown(remediation: &str) -> String {
+    let message = format!(
+        "Avoid committing secrets. Use environment variables or a secrets manager.\n\n\
+         If exposed: {remediation}"
+    );
+
+    format_alert("$(info)", "{{muted}}", "Remediation", &message)
+}
+
+fn format_alert(icon: &str, title_color: &str, title: &str, message: &str) -> String {
+    let mut lines = vec![format!(
+        "{icon} **<span style=\"color:{title_color};\">{title}</span>**"
+    )];
+
+    for line in message.lines() {
+        if line.is_empty() {
+            lines.push(String::new());
+        } else {
+            lines.push(format!("<span style=\"color:{{{{muted}}}};\">{line}</span>"));
         }
-        ExposureRisk::NotInHistory => "**Remediation**\n\n\
-             Remove before committing. Use environment variables or a secrets manager."
-            .to_string(),
-        ExposureRisk::Unknown => {
-            format!(
-                "**Remediation**\n\n\
-                 Avoid committing secrets. Use environment variables or a secrets manager.\n\n\
-                 If exposed: {remediation}"
-            )
-        }
+    }
+
+    lines.join("\n")
+}
+
+fn severity_icon(severity: Severity) -> &'static str {
+    match severity {
+        Severity::Critical => "$(flame)",
+        Severity::High => "$(warning)",
+        Severity::Medium => "$(info)",
+        Severity::Low => "$(chevron-down)",
+    }
+}
+
+fn severity_color(severity: Severity) -> &'static str {
+    match severity {
+        Severity::Critical => "{{danger}}",
+        Severity::High => "{{warning}}",
+        Severity::Medium => "{{info}}",
+        Severity::Low => "{{success}}",
     }
 }
 
@@ -104,7 +159,7 @@ mod tests {
     }
 
     #[test]
-    fn hover_contains_pattern_name() {
+    fn contains_pattern_name_bold() {
         let pattern = make_pattern(
             "aws/access-key",
             "AWS Access Key ID",
@@ -114,11 +169,11 @@ mod tests {
         );
         let hover = pattern_hover(&pattern, Range::default(), ExposureRisk::Unknown);
 
-        assert!(hover_markdown(&hover).contains("## AWS Access Key ID"));
+        assert!(hover_markdown(&hover).contains("**AWS Access Key ID**"));
     }
 
     #[test]
-    fn hover_contains_description() {
+    fn contains_description() {
         let pattern = make_pattern(
             "test/pattern",
             "Test Pattern",
@@ -132,7 +187,7 @@ mod tests {
     }
 
     #[test]
-    fn hover_contains_pattern_id_at_end() {
+    fn contains_pattern_id_at_end() {
         let pattern = make_pattern(
             "aws/secret-key",
             "AWS Secret Key",
@@ -148,68 +203,51 @@ mod tests {
     }
 
     #[test]
-    fn hover_critical_shows_simple_text() {
+    fn critical_severity_has_flame_icon_and_danger_token() {
         let pattern = make_pattern("test", "Test", "Desc", Severity::Critical, None);
         let hover = pattern_hover(&pattern, Range::default(), ExposureRisk::Unknown);
-
         let markdown = hover_markdown(&hover);
-        assert!(markdown.contains("**Critical** severity"));
+
+        assert!(markdown.contains("$(flame)"));
+        assert!(markdown.contains("{{danger}}"));
+        assert!(markdown.contains("Critical"));
     }
 
     #[test]
-    fn hover_high_shows_simple_text() {
+    fn high_severity_has_warning_icon_and_warning_token() {
         let pattern = make_pattern("test", "Test", "Desc", Severity::High, None);
         let hover = pattern_hover(&pattern, Range::default(), ExposureRisk::Unknown);
-
         let markdown = hover_markdown(&hover);
-        assert!(markdown.contains("**High** severity"));
-        assert!(!markdown.contains(">"));
+
+        assert!(markdown.contains("$(warning)"));
+        assert!(markdown.contains("{{warning}}"));
+        assert!(markdown.contains("High"));
     }
 
     #[test]
-    fn hover_medium_shows_simple_text() {
+    fn medium_severity_has_info_icon_and_info_token() {
         let pattern = make_pattern("test", "Test", "Desc", Severity::Medium, None);
         let hover = pattern_hover(&pattern, Range::default(), ExposureRisk::Unknown);
-
         let markdown = hover_markdown(&hover);
-        assert!(markdown.contains("**Medium** severity"));
+
+        assert!(markdown.contains("$(info)"));
+        assert!(markdown.contains("{{info}}"));
+        assert!(markdown.contains("Medium"));
     }
 
     #[test]
-    fn hover_low_shows_simple_text() {
+    fn low_severity_has_chevron_icon_and_success_token() {
         let pattern = make_pattern("test", "Test", "Desc", Severity::Low, None);
         let hover = pattern_hover(&pattern, Range::default(), ExposureRisk::Unknown);
-
         let markdown = hover_markdown(&hover);
-        assert!(markdown.contains("**Low** severity"));
+
+        assert!(markdown.contains("$(chevron-down)"));
+        assert!(markdown.contains("{{success}}"));
+        assert!(markdown.contains("Low"));
     }
 
     #[test]
-    fn hover_includes_remediation_when_present() {
-        let pattern = make_pattern(
-            "test",
-            "Test",
-            "Desc",
-            Severity::High,
-            Some("Rotate the credential immediately"),
-        );
-        let hover = pattern_hover(&pattern, Range::default(), ExposureRisk::Unknown);
-
-        let markdown = hover_markdown(&hover);
-        assert!(markdown.contains("**Remediation**"));
-        assert!(markdown.contains("Rotate the credential immediately"));
-    }
-
-    #[test]
-    fn hover_excludes_remediation_when_absent() {
-        let pattern = make_pattern("test", "Test", "Desc", Severity::High, None);
-        let hover = pattern_hover(&pattern, Range::default(), ExposureRisk::Unknown);
-
-        assert!(!hover_markdown(&hover).contains("**Remediation**"));
-    }
-
-    #[test]
-    fn hover_is_markdown() {
+    fn content_is_markdown_format() {
         let pattern = make_pattern("test", "Test", "Desc", Severity::High, None);
         let hover = pattern_hover(&pattern, Range::default(), ExposureRisk::Unknown);
 
@@ -220,7 +258,7 @@ mod tests {
     }
 
     #[test]
-    fn hover_has_range() {
+    fn includes_provided_range() {
         let pattern = make_pattern("test", "Test", "Desc", Severity::High, None);
         let range = Range::new(Position::new(5, 10), Position::new(5, 20));
         let hover = pattern_hover(&pattern, range, ExposureRisk::Unknown);
@@ -229,7 +267,7 @@ mod tests {
     }
 
     #[test]
-    fn hover_in_history_shows_warning() {
+    fn in_history_shows_alert_with_danger_token() {
         let pattern = make_pattern(
             "test",
             "Test",
@@ -240,12 +278,14 @@ mod tests {
         let hover = pattern_hover(&pattern, Range::default(), ExposureRisk::InHistory);
         let markdown = hover_markdown(&hover);
 
-        assert!(markdown.contains("⚠️ This secret is in your git history"));
+        assert!(markdown.contains("$(alert)"));
+        assert!(markdown.contains("color:{{danger}};"));
+        assert!(markdown.contains("git history"));
         assert!(markdown.contains("Rotate the credential immediately"));
     }
 
     #[test]
-    fn hover_not_in_history_shows_prevention_advice() {
+    fn not_in_history_shows_prevention_with_info_token() {
         let pattern = make_pattern(
             "test",
             "Test",
@@ -256,13 +296,15 @@ mod tests {
         let hover = pattern_hover(&pattern, Range::default(), ExposureRisk::NotInHistory);
         let markdown = hover_markdown(&hover);
 
+        assert!(markdown.contains("$(shield)"));
+        assert!(markdown.contains("color:{{info}};"));
         assert!(markdown.contains("Remove before committing"));
         assert!(markdown.contains("environment variables"));
         assert!(!markdown.contains("Rotate the credential"));
     }
 
     #[test]
-    fn hover_unknown_shows_generic_advice() {
+    fn unknown_exposure_shows_generic_advice() {
         let pattern = make_pattern(
             "test",
             "Test",
@@ -273,8 +315,36 @@ mod tests {
         let hover = pattern_hover(&pattern, Range::default(), ExposureRisk::Unknown);
         let markdown = hover_markdown(&hover);
 
+        assert!(markdown.contains("$(info)"));
         assert!(markdown.contains("Avoid committing secrets"));
         assert!(markdown.contains("If exposed:"));
         assert!(markdown.contains("Rotate the credential immediately"));
+    }
+
+    #[test]
+    fn includes_key_icon_in_header() {
+        let pattern = make_pattern("test", "Test", "Desc", Severity::High, None);
+        let hover = pattern_hover(&pattern, Range::default(), ExposureRisk::Unknown);
+
+        assert!(hover_markdown(&hover).contains("$(key)"));
+    }
+
+    #[test]
+    fn without_remediation_omits_alert_section() {
+        let pattern = make_pattern("test", "Test", "Desc", Severity::High, None);
+        let hover = pattern_hover(&pattern, Range::default(), ExposureRisk::InHistory);
+        let markdown = hover_markdown(&hover);
+
+        assert!(!markdown.contains("$(alert)"));
+        assert!(!markdown.contains("$(shield)"));
+    }
+
+    #[test]
+    fn message_lines_use_muted_token() {
+        let pattern = make_pattern("test", "Test", "Desc", Severity::High, Some("Fix it"));
+        let hover = pattern_hover(&pattern, Range::default(), ExposureRisk::InHistory);
+        let markdown = hover_markdown(&hover);
+
+        assert!(markdown.contains("color:{{muted}};"));
     }
 }
