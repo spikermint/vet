@@ -1,12 +1,17 @@
+//! Text output formatting for scan results.
+
 use std::collections::HashMap;
 use std::io::Write;
 
 use console::style;
 use vet_core::prelude::*;
 
-use super::{ContentCache, OutputContext};
+use super::OutputContext;
+use crate::commands::scan::runner::ContentCache;
 use crate::files::get_context_lines;
-use crate::ui::{build_severity_summary, colors, format_duration, pluralise_word, severity_style};
+use crate::ui::{
+    build_severity_summary, colors, format_duration, indicators, pluralise_word, severity_indicator, severity_style,
+};
 
 const LINE_NUMBER_WIDTH: usize = 4;
 
@@ -60,10 +65,11 @@ fn write_finding_header(
     let description = pattern.map_or("Secret detected", |p| &p.name);
 
     let is_low_confidence = finding.confidence == Confidence::Low;
-    let indicator_style = if is_low_confidence {
-        colors::warning()
+
+    let indicator = if is_low_confidence {
+        colors::warning().apply_to(indicators::WARNING).to_string()
     } else {
-        sev_style.clone()
+        severity_indicator(finding.severity)
     };
 
     let confidence_suffix = if is_low_confidence {
@@ -80,7 +86,7 @@ fn write_finding_header(
         writer,
         format_args!(
             "{} {} {} {}{}",
-            indicator_style.apply_to("●"),
+            indicator,
             style(description).bold(),
             colors::muted().apply_to("·"),
             sev_style.apply_to(&severity_label),
@@ -98,7 +104,7 @@ fn write_finding_header(
 
     write_line(
         writer,
-        format_args!("  {}", colors::muted().apply_to(&location)),
+        format_args!("  {}", colors::secondary().apply_to(&location)),
         strip_colors,
     )?;
 
@@ -149,7 +155,12 @@ fn write_finding_line(
 
     write_line(
         writer,
-        format_args!("{} {} {}", style(&line_num).bold(), style("│").dim(), ctx.content),
+        format_args!(
+            "{} {} {}",
+            style(&line_num).bold(),
+            colors::muted().apply_to("│"),
+            ctx.content
+        ),
         strip_colors,
     )?;
 
@@ -186,9 +197,9 @@ fn write_context_line(
         writer,
         format_args!(
             "{} {} {}",
-            colors::muted().apply_to(&line_num),
-            style("│").dim(),
-            colors::muted().apply_to(&ctx.content)
+            colors::line_number().apply_to(&line_num),
+            colors::muted().apply_to("│"),
+            colors::code().apply_to(&ctx.content)
         ),
         strip_colors,
     )
@@ -215,8 +226,8 @@ fn write_remediation_hint(
         writer,
         format_args!(
             "  {} {}",
-            colors::muted().apply_to("→"),
-            colors::muted().apply_to(trimmed)
+            colors::info().apply_to(indicators::INFO),
+            colors::secondary().apply_to(trimmed)
         ),
         strip_colors,
     )
@@ -254,9 +265,11 @@ fn write_clean_summary(files: &str, time: &str, writer: &mut dyn Write, strip_co
     write_line(
         writer,
         format_args!(
-            "{} {}",
-            colors::success().apply_to("✓"),
-            colors::muted().apply_to(format!("no secrets · {files} ({time})"))
+            "{} {} {} {}",
+            colors::success().apply_to(indicators::SUCCESS),
+            colors::primary().apply_to("No secrets found"),
+            colors::muted().apply_to("·"),
+            colors::muted().apply_to(format!("{files} ({time})"))
         ),
         strip_colors,
     )
@@ -277,12 +290,12 @@ fn write_findings_summary(
         writer,
         format_args!(
             "{} {} {} {} {} {}",
-            colors::error().apply_to("●"),
-            style(format!("{count} {word}")).bold(),
+            colors::error().apply_to(indicators::ERROR),
+            colors::primary().apply_to(format!("{count} {word} found")),
             colors::muted().apply_to("·"),
             severity_summary,
-            colors::muted().apply_to(format!("· {files}")),
-            colors::muted().apply_to(format!("({time})"))
+            colors::muted().apply_to("·"),
+            colors::muted().apply_to(format!("{files} ({time})"))
         ),
         strip_colors,
     )
