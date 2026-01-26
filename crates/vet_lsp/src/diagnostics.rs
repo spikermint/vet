@@ -1,3 +1,7 @@
+//! Diagnostic generation from scan findings.
+//!
+//! Converts scanner findings to LSP diagnostics.
+
 use tower_lsp::lsp_types::{Diagnostic, DiagnosticSeverity, DiagnosticTag, NumberOrString, Position, Range};
 use vet_core::prelude::*;
 

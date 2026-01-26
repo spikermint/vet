@@ -57,6 +57,18 @@
           "default": true,
           "description": "Skip files ignored by .gitignore"
         },
+        "vet.logLevel": {
+          "type": "string",
+          "enum": [
+            "error",
+            "warn",
+            "info",
+            "debug",
+            "trace"
+          ],
+          "default": "info",
+          "description": "Server logging verbosity. Use 'debug' or 'trace' to help diagnose issues."
+        },
         "vet.trace.server": {
           "type": "string",
           "enum": [

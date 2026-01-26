@@ -3,14 +3,11 @@
 use tower_lsp::lsp_types::{
     DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams,
 };
-use tracing::{debug, warn};
+use tracing::{debug, info};
 
 use super::VetLanguageServer;
+use super::scanning::ScanTrigger;
 use crate::state::OpenDocument;
-
-/// Minimum change size (in bytes) to trigger a rescan.
-/// Most secrets are longer than 8 characters.
-const MIN_CHANGE_SIZE: usize = 8;
 
 impl VetLanguageServer {
     pub(super) async fn handle_did_open(&self, params: DidOpenTextDocumentParams) {
@@ -18,7 +15,9 @@ impl VetLanguageServer {
         let content = params.text_document.text.clone();
         let language_id = params.text_document.language_id.clone();
 
-        debug!("Document opened: {uri} (language: {language_id})");
+        let filename = uri.path_segments().and_then(|s| s.last()).unwrap_or("unknown");
+
+        info!("Opened {filename} ({language_id})");
 
         self.state
             .write()
@@ -26,18 +25,36 @@ impl VetLanguageServer {
             .open_documents
             .insert(uri.clone(), OpenDocument::new(content.clone(), language_id));
 
-        self.scan_document(&uri, &content).await;
+        self.scan_document(&uri, &content, ScanTrigger::Open).await;
     }
 
     pub(super) async fn handle_did_save(&self, params: DidSaveTextDocumentParams) {
+        let uri = params.text_document.uri;
+
+        let filename = uri.path_segments().and_then(|s| s.last()).unwrap_or("unknown");
+
+        debug!("Saved {filename}");
+
+        if let Some(content) = params.text {
+            let mut state = self.state.write().await;
+            if let Some(doc) = state.open_documents.get_mut(&uri) {
+                doc.content = content;
+            }
+        }
+    }
+
+    pub(super) async fn handle_did_change(&self, params: DidChangeTextDocumentParams) {
         let uri = params.text_document.uri.clone();
 
-        let Some(content) = params.text else {
-            warn!("Save event missing text content");
+        let filename = uri.path_segments().and_then(|s| s.last()).unwrap_or("unknown");
+
+        debug!("Changed {filename}");
+
+        let Some(change) = params.content_changes.into_iter().last() else {
             return;
         };
 
-        debug!("Document saved: {uri}");
+        let content = change.text;
 
         {
             let mut state = self.state.write().await;
@@ -46,42 +63,15 @@ impl VetLanguageServer {
             }
         }
 
-        self.scan_document(&uri, &content).await;
-    }
-
-    pub(super) async fn handle_did_change(&self, params: DidChangeTextDocumentParams) {
-        let uri = params.text_document.uri.clone();
-
-        let total_changed: usize = params.content_changes.iter().map(|c| c.text.len()).sum();
-
-        if total_changed < MIN_CHANGE_SIZE {
-            if let Some(change) = params.content_changes.into_iter().last() {
-                let mut state = self.state.write().await;
-                if let Some(doc) = state.open_documents.get_mut(&uri) {
-                    doc.content = change.text;
-                }
-            }
-            return;
-        }
-
-        let Some(change) = params.content_changes.into_iter().last() else {
-            return;
-        };
-
-        let content = change.text.clone();
-
-        {
-            let mut state = self.state.write().await;
-            if let Some(doc) = state.open_documents.get_mut(&uri) {
-                doc.content = content.clone();
-            }
-        }
-
-        self.scan_document(&uri, &content).await;
+        self.debouncer.schedule(uri, content);
     }
 
     pub(super) async fn handle_did_close(&self, params: DidCloseTextDocumentParams) {
         let uri = &params.text_document.uri;
+
+        let filename = uri.path_segments().and_then(|s| s.last()).unwrap_or("unknown");
+
+        debug!("Closed {filename}");
 
         {
             let mut state = self.state.write().await;

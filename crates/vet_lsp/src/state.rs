@@ -1,3 +1,8 @@
+//! Server state management.
+//!
+//! Maintains the runtime state of the language server including scanner,
+//! workspace configuration, and open documents.
+
 use std::collections::HashMap;
 use std::path::PathBuf;
 
@@ -16,6 +21,21 @@ impl OpenDocument {
     #[must_use]
     pub fn new(content: String, language_id: String) -> Self {
         Self { content, language_id }
+    }
+
+    #[must_use]
+    pub fn extract_range(&self, line: u32, start_char: u32, end_char: u32) -> Option<String> {
+        let line_content = self.content.lines().nth(line as usize)?;
+        let chars: Vec<char> = line_content.chars().collect();
+
+        let start = start_char as usize;
+        let end = end_char as usize;
+
+        if start > chars.len() || end > chars.len() || start > end {
+            return None;
+        }
+
+        Some(chars[start..end].iter().collect())
     }
 }
 
@@ -81,14 +101,13 @@ impl Default for ServerState {
 impl std::fmt::Debug for ServerState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("ServerState")
-            .field("scanner", &self.scanner)
+            .field("scanner", &self.scanner.as_ref().map(|_| "Scanner"))
             .field("workspace_roots", &self.workspace_roots)
-            .field("has_config", &self.config.is_some())
-            .field("has_gitignore", &self.gitignore.is_some())
+            .field("config", &self.config)
             .field("respect_gitignore", &self.respect_gitignore)
-            .field("open_document_count", &self.open_documents.len())
-            .field("diagnostics_count", &self.diagnostics.len())
-            .finish_non_exhaustive()
+            .field("open_documents", &self.open_documents.len())
+            .field("diagnostics", &self.diagnostics.len())
+            .finish()
     }
 }
 
@@ -210,7 +229,6 @@ mod tests {
     fn debug_format_includes_gitignore_info() {
         let state = ServerState::new();
         let debug = format!("{:?}", state);
-        assert!(debug.contains("has_gitignore"));
         assert!(debug.contains("respect_gitignore"));
     }
 }

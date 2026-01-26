@@ -1,5 +1,6 @@
 //! Document scanning and diagnostics.
 
+use std::fmt;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
@@ -11,24 +12,47 @@ use crate::diagnostics::{filter_by_confidence, findings_to_diagnostics};
 use crate::exclusions;
 use crate::uri::try_uri_to_path;
 
+#[derive(Debug, Clone, Copy)]
+pub enum ScanTrigger {
+    Open,
+    Debounce,
+    ConfigChange,
+}
+
+impl fmt::Display for ScanTrigger {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Open => write!(f, "open"),
+            Self::Debounce => write!(f, "debounce"),
+            Self::ConfigChange => write!(f, "config"),
+        }
+    }
+}
+
 impl VetLanguageServer {
-    pub(super) async fn scan_document(&self, uri: &Url, content: &str) {
+    pub(super) async fn scan_document(&self, uri: &Url, content: &str, trigger: ScanTrigger) {
         let start = Instant::now();
         let file_path = try_uri_to_path(uri);
         let state = self.state.read().await;
+
+        let display_path = file_path
+            .as_ref()
+            .map(|p| p.display().to_string())
+            .unwrap_or_else(|| uri.path().to_string());
 
         if let Some(path) = &file_path {
             if state.respect_gitignore
                 && let Some(root) = state.primary_workspace_root()
                 && exclusions::is_gitignored(state.gitignore.as_ref(), path, root)
             {
-                debug!("Skipping gitignored file: {}", path.display());
+                info!("Skipped {} (gitignored)", display_path);
                 drop(state);
                 self.clear_diagnostics(uri).await;
                 return;
             }
 
             if exclusions::is_excluded(state.exclude_matcher.as_ref(), path, &state.workspace_roots) {
+                info!("Skipped {} (excluded by config)", display_path);
                 drop(state);
                 self.clear_diagnostics(uri).await;
                 return;
@@ -46,19 +70,26 @@ impl VetLanguageServer {
         let filtered = filter_by_confidence(findings, include_low_confidence);
         let elapsed = start.elapsed();
 
-        let filename = scan_path.file_name().unwrap_or_default().to_string_lossy();
         let finding_count = filtered.len();
 
         if finding_count > 0 {
+            let pattern_ids: Vec<&str> = filtered.iter().map(|f| &*f.pattern_id).collect();
             info!(
-                "Scanned {} in {} ({} finding{})",
-                filename,
+                "Scanned {} [{}] in {} ({} finding{}: {})",
+                display_path,
+                trigger,
                 format_duration(elapsed),
                 finding_count,
-                if finding_count == 1 { "" } else { "s" }
+                if finding_count == 1 { "" } else { "s" },
+                pattern_ids.join(", ")
             );
         } else {
-            debug!("Scanned {} in {} (clean)", filename, format_duration(elapsed));
+            debug!(
+                "Scanned {} [{}] in {} (clean)",
+                display_path,
+                trigger,
+                format_duration(elapsed)
+            );
         }
 
         let diagnostics = findings_to_diagnostics(&filtered);
@@ -93,7 +124,9 @@ fn format_duration(d: Duration) -> String {
         let millis = nanos as f64 / 1_000_000.0;
         format!("{millis:.1}ms")
     } else {
-        format!("{:.2}s", d.as_secs_f64())
+        #[allow(clippy::cast_precision_loss)]
+        let secs = nanos as f64 / 1_000_000_000.0;
+        format!("{secs:.2}s")
     }
 }
 

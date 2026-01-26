@@ -16,6 +16,7 @@ path = "src/main.rs"
 workspace = true
 
 [dependencies]
+gix.workspace = true
 globset.workspace = true
 ignore.workspace = true
 serde.workspace = true

@@ -1,7 +1,9 @@
 mod code_actions;
 mod comment_syntax;
+mod debounce;
 mod diagnostics;
 mod exclusions;
+mod git;
 mod hover;
 mod server;
 mod state;
