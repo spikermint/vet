@@ -21,15 +21,16 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
+      # NOTE: Linux builds use ubuntu-22.04 (not latest) to target glibc 2.35 for compatibility with older systems
       matrix:
         include:
           # Linux x64
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
             artifact: vet-linux-x64
 
           # Linux ARM64
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             target: aarch64-unknown-linux-gnu
             artifact: vet-linux-arm64
             cross: true

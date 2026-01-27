@@ -58,7 +58,8 @@ jobs:
 
   build-lsp:
     name: Build LSP
-    runs-on: ubuntu-latest
+    # NOTE: Linux builds use ubuntu-22.04 (not latest) to target glibc 2.35 for compatibility with older systems
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -108,7 +109,8 @@ jobs:
   extension-e2e:
     name: Extension E2E
     needs: [extension, build-lsp]
-    runs-on: ubuntu-latest
+    # NOTE: Linux builds use ubuntu-22.04 (not latest) to target glibc 2.35 for compatibility with older systems
+    runs-on: ubuntu-22.04
     defaults:
       run:
         working-directory: editors/vscode
