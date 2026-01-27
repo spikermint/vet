@@ -2,7 +2,7 @@
   "name": "vet",
   "displayName": "Vet",
   "description": "Detect secrets in your code before they leak",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "publisher": "vet",
   "license": "MIT",
   "repository": {

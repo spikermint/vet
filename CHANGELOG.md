@@ -1,4 +1,14 @@
 # vet
+## 0.2.1 (2026-01-27)
+
+### Features
+
+- add fix command (#36)
+
+### Fixes
+
+- improve glibc compat (#37)
+
 ## 0.2.0 (2026-01-26)
 
 ### Breaking Changes
