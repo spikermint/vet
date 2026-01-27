@@ -73,7 +73,7 @@ pub fn apply_action(content: &mut String, finding: &Finding, action: &FixAction,
 pub fn derive_env_var_name(pattern_id: &str) -> String {
     pattern_id
         .split('/')
-        .last()
+        .next_back()
         .unwrap_or(pattern_id)
         .replace('-', "_")
         .to_uppercase()

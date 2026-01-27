@@ -1,5 +1,7 @@
 //! End-to-end tests for the `vet scan` command.
 
+#![allow(clippy::expect_used)]
+
 use std::fs;
 
 use assert_cmd::Command;
