@@ -2,12 +2,15 @@ name: Smoke Test
 
 on:
   workflow_dispatch:
-  release:
-    types: [published]
+  workflow_run:
+    workflows: ["Release Artifacts"]
+    types:
+      - completed
 
 jobs:
   unix:
     name: ${{ matrix.name }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     strategy:
       fail-fast: false
       matrix:
@@ -27,6 +30,7 @@ jobs:
 
   windows:
     name: Windows x64
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v6
