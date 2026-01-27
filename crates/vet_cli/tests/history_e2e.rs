@@ -1,3 +1,5 @@
+//! End-to-end tests for the `vet history` command.
+
 #![allow(clippy::expect_used)]
 
 use std::fs;

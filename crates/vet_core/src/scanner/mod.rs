@@ -6,12 +6,11 @@ use std::path::Path;
 use tracing::{debug, trace};
 
 use crate::binary::is_binary_content;
+use crate::comment_syntax::IGNORE_MARKER;
 use crate::entropy::shannon_entropy;
 use crate::finding::{Confidence, Finding, FindingId, Secret, Span};
 use crate::pattern::{Pattern, PatternRegistry, Severity};
 use crate::text::{find_line_end, find_line_start};
-
-const IGNORE_MARKER: &str = "vet:ignore";
 
 pub struct Scanner {
     registry: PatternRegistry,

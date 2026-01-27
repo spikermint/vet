@@ -37,6 +37,25 @@ Write-Host "==> SARIF output"
 'sk_live_51NzKDwH3JxMvRtYbUcE8q' | Out-File "$testDir\secret.txt"
 $sarif = vet scan $testDir --format sarif 2>&1 | Out-String
 if ($sarif -notmatch 'schema') { throw "Invalid SARIF" }
+Remove-Item "$testDir\secret.txt"
+
+Write-Host "==> Fix command exists"
+$fixHelp = vet fix --help 2>&1 | Out-String
+if ($fixHelp -notmatch 'dry-run') { throw "Fix help missing dry-run" }
+if ($fixHelp -notmatch 'severity') { throw "Fix help missing severity" }
+
+Write-Host "==> Fix reports no secrets when clean"
+'fn main() {}' | Out-File "$testDir\clean.rs"
+$output = vet fix $testDir 2>&1 | Out-String
+if ($output -notmatch 'no secrets') { throw "Fix should report no secrets" }
+Remove-Item "$testDir\clean.rs"
+
+Write-Host "==> Fix reports no files when empty"
+$emptyDir = Join-Path $testDir "empty"
+New-Item -ItemType Directory -Path $emptyDir -Force | Out-Null
+$output = vet fix $emptyDir 2>&1 | Out-String
+if ($output -notmatch 'no files') { throw "Fix should report no files" }
+Remove-Item -Recurse $emptyDir
 
 Remove-Item -Recurse $testDir
 

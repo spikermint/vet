@@ -1,5 +1,5 @@
 ---
-source: crates/vet_cli/tests/cli_snapshots.rs
+source: crates/vet_cli/tests/init_e2e.rs
 expression: config
 ---
 severity = "low"

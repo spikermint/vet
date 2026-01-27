@@ -10,10 +10,9 @@ use super::OutputContext;
 use crate::commands::scan::runner::ContentCache;
 use crate::files::get_context_lines;
 use crate::ui::{
-    build_severity_summary, colors, format_duration, indicators, pluralise_word, severity_indicator, severity_style,
+    LINE_NUMBER_WIDTH, build_severity_summary, colors, format_duration, indicators, pluralise_word, severity_indicator,
+    severity_style,
 };
-
-const LINE_NUMBER_WIDTH: usize = 4;
 
 pub fn write(ctx: &OutputContext, writer: &mut dyn Write, strip_colors: bool, verbose: u8) -> anyhow::Result<()> {
     let pattern_index = index_patterns_by_id(ctx.patterns);

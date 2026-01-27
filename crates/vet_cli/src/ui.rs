@@ -76,6 +76,8 @@ const SEVERITY_HIGH_COLOR: u8 = 208;
 const SEVERITY_MEDIUM_COLOR: u8 = 220;
 const SEVERITY_LOW_COLOR: u8 = 75;
 
+pub const LINE_NUMBER_WIDTH: usize = 4;
+
 pub const fn severity_style(severity: Severity) -> Style {
     match severity {
         Severity::Critical => Style::new().color256(SEVERITY_CRITICAL_COLOR).bold(),

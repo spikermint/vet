@@ -32,4 +32,21 @@ echo 'sk_live_51NzKDwH3JxMvRtYbUcE8q' > /tmp/test.txt
 vet scan /tmp --format sarif 2>/dev/null | grep -q 'schema' || { echo "Invalid SARIF"; exit 1; }
 rm /tmp/test.txt
 
+echo "==> Fix command exists"
+vet fix --help | grep -q "dry-run" || { echo "Fix help missing dry-run"; exit 1; }
+vet fix --help | grep -q "severity" || { echo "Fix help missing severity"; exit 1; }
+
+echo "==> Fix reports no secrets when clean"
+mkdir -p /tmp/fix-clean-test
+echo 'fn main() {}' > /tmp/fix-clean-test/clean.rs
+OUTPUT=$(vet fix /tmp/fix-clean-test 2>&1) || true
+echo "$OUTPUT" | grep -q "no secrets" || { echo "Fix should report no secrets"; exit 1; }
+rm -rf /tmp/fix-clean-test
+
+echo "==> Fix reports no files when empty"
+mkdir -p /tmp/fix-empty-test
+OUTPUT=$(vet fix /tmp/fix-empty-test 2>&1) || true
+echo "$OUTPUT" | grep -q "no files" || { echo "Fix should report no files"; exit 1; }
+rm -rf /tmp/fix-empty-test
+
 echo "✓ All checks passed"

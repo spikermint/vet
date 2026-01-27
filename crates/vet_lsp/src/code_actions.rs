@@ -4,8 +4,8 @@ use tower_lsp::lsp_types::{
     CodeAction, CodeActionKind, CodeActionOrCommand, Diagnostic, Position, Range, TextEdit, Url, WorkspaceEdit,
 };
 
-use crate::comment_syntax::{self, CommentSyntax};
 use crate::state::OpenDocument;
+use vet_core::comment_syntax::{self, CommentSyntax};
 
 #[must_use]
 pub fn actions_for_diagnostics(

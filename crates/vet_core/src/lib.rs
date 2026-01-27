@@ -22,6 +22,7 @@
 //! The CLI crate (`vet_cli`) uses [`anyhow`] for error propagation.
 
 pub mod binary;
+pub mod comment_syntax;
 pub mod config;
 pub(crate) mod entropy;
 pub mod error;
@@ -31,7 +32,7 @@ pub mod prelude;
 pub mod scanner;
 #[cfg(test)]
 pub(crate) mod test_utils;
-pub(crate) mod text;
+pub mod text;
 
 pub use config::{Config, ConfigError, CustomPattern};
 pub use error::{PatternError, VetError};
