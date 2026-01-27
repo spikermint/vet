@@ -1,5 +1,4 @@
 mod code_actions;
-mod comment_syntax;
 mod debounce;
 mod diagnostics;
 mod exclusions;
