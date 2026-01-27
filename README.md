@@ -76,6 +76,27 @@ vet scan --staged
 vet scan --format json
 ```
 
+### Interactive Fixing
+
+Found secrets? Fix them interactively:
+```bash
+# Review and fix each secret
+vet fix
+
+# Preview changes without modifying files
+vet fix --dry-run
+
+# Fix specific paths
+vet fix src/ config/
+```
+
+Actions available:
+- **Redact** - Replace with `<REDACTED>`
+- **Placeholder** - Replace with `${ENV_VAR_NAME}`
+- **Delete line** - Remove the entire line
+- **Ignore** - Append `vet:ignore` comment
+- **Skip** - Leave unchanged
+
 ### Pre-commit Hook
 ```bash
 vet hook install

@@ -1,5 +1,0 @@
----
-source: crates/vet_cli/tests/cli_snapshots.rs
-expression: stdout.trim()
----
-[]

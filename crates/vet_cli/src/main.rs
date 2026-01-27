@@ -1,11 +1,8 @@
-//! Vet CLI - A local-first secret scanner for source code.
-//!
-//! Detects API keys, tokens, passwords, and other secrets before they
-//! reach your repository. Works offline with zero configuration.
-//!
 //! # Commands
 //!
 //! - `vet scan` - Scan files for secrets
+//! - `vet fix` - Interactively fix detected secrets
+//! - `vet history` - Scan commits in git repository for secrets
 //! - `vet init` - Create configuration file
 //! - `vet hook` - Manage git pre-commit hooks
 //! - `vet patterns` - List detection patterns
@@ -44,6 +41,9 @@ struct Cli {
 enum Command {
     #[command(visible_alias = "s")]
     Scan(ScanArgs),
+
+    #[command(visible_alias = "f")]
+    Fix(FixArgs),
 
     #[command(visible_alias = "p")]
     Patterns(PatternsArgs),
@@ -112,6 +112,30 @@ pub struct ScanArgs {
 
     #[arg(long)]
     pub staged: bool,
+}
+
+#[derive(Debug, Parser)]
+pub struct FixArgs {
+    #[arg(default_value = ".")]
+    pub paths: Vec<PathBuf>,
+
+    #[arg(short, long)]
+    pub config: Option<PathBuf>,
+
+    #[arg(long, value_enum)]
+    pub severity: Option<Severity>,
+
+    #[arg(long)]
+    pub exclude: Vec<String>,
+
+    #[arg(long)]
+    pub no_gitignore: bool,
+
+    #[arg(long)]
+    pub dry_run: bool,
+
+    #[arg(long)]
+    pub max_file_size: Option<u64>,
 }
 
 #[derive(Debug, Parser)]
@@ -229,6 +253,15 @@ fn run(command: Command) -> anyhow::Result<()> {
             clap_complete::generate(shell, &mut Cli::command(), "vet", &mut std::io::stdout());
             Ok(())
         }
+        Command::Fix(args) => commands::fix::run(
+            &args.paths,
+            args.config.as_deref(),
+            args.severity,
+            &args.exclude,
+            args.no_gitignore,
+            args.dry_run,
+            args.max_file_size,
+        ),
         Command::History(args) => commands::history::run(&args),
         Command::Hook { command } => commands::hook::run(command.as_ref()),
         Command::Init(args) => commands::init::run(args.yes, args.minimal, args.output),
@@ -257,6 +290,8 @@ fn build_after_help() -> String {
     vet scan .                     Scan current directory
     vet scan src/ tests/           Scan multiple paths
     vet scan . --format json       Output as JSON
+    vet fix                        Interactively fix secrets
+    vet fix --dry-run              Preview fixes without changing files
     vet history                    Scan git history
     vet history -n 100             Scan last 100 commits
     vet init                       Create config file
