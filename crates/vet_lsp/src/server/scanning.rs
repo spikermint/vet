@@ -41,6 +41,12 @@ impl VetLanguageServer {
             .unwrap_or_else(|| uri.path().to_string());
 
         if let Some(path) = &file_path {
+            // Skip files outside all workspace roots
+            if !state.workspace_roots.is_empty() && !state.workspace_roots.iter().any(|root| path.starts_with(root)) {
+                debug!("Skipped {} (outside workspace)", display_path);
+                return;
+            }
+
             if state.respect_gitignore
                 && let Some(root) = state.primary_workspace_root()
                 && exclusions::is_gitignored(state.gitignore.as_ref(), path, root)

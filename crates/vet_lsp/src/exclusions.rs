@@ -33,6 +33,10 @@ pub fn build_gitignore(workspace_root: &Path) -> Option<Gitignore> {
 
 #[must_use]
 pub fn is_gitignored(root_gitignore: Option<&Gitignore>, path: &Path, workspace_root: &Path) -> bool {
+    if !path.starts_with(workspace_root) {
+        return false;
+    }
+
     if let Some(gi) = root_gitignore
         && gi.matched_path_or_any_parents(path, path.is_dir()).is_ignore()
     {
