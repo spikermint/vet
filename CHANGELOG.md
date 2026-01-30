@@ -1,4 +1,10 @@
 # vet
+## 0.2.2 (2026-01-30)
+
+### Fixes
+
+- skip scanning outside workspace (#43)
+
 ## 0.2.1 (2026-01-27)
 
 ### Features
