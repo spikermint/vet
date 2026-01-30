@@ -1,4 +1,10 @@
 # vet
+## 0.3.0 (2026-01-30)
+
+### Breaking Changes
+
+- replace FNV with SHA256 for fingerprint hashing (#45)
+
 ## 0.2.2 (2026-01-30)
 
 ### Fixes
