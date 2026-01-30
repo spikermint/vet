@@ -173,4 +173,22 @@ mod tests {
         let fallback = PathBuf::from(uri.path());
         assert_eq!(fallback, PathBuf::from("scratch.rs"));
     }
+
+    #[test]
+    fn path_outside_workspace_is_detected() {
+        let workspace_roots = vec![PathBuf::from("/home/user/project")];
+        let external_path = PathBuf::from("/home/user/.cargo/registry/src/crate/lib.rs");
+
+        let is_inside = workspace_roots.iter().any(|root| external_path.starts_with(root));
+        assert!(!is_inside);
+    }
+
+    #[test]
+    fn path_inside_workspace_is_detected() {
+        let workspace_roots = vec![PathBuf::from("/home/user/project")];
+        let internal_path = PathBuf::from("/home/user/project/src/main.rs");
+
+        let is_inside = workspace_roots.iter().any(|root| internal_path.starts_with(root));
+        assert!(is_inside);
+    }
 }

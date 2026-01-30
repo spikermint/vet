@@ -220,6 +220,17 @@ mod tests {
     }
 
     #[test]
+    fn is_gitignored_returns_false_for_path_outside_workspace() {
+        let dir = TempDir::new().unwrap();
+        fs::write(dir.path().join(".gitignore"), "*.env\n").unwrap();
+
+        let gi = build_gitignore(dir.path()).unwrap();
+        let external_path = Path::new("/some/other/location/secrets.env");
+
+        assert!(!is_gitignored(Some(&gi), external_path, dir.path()));
+    }
+
+    #[test]
     fn build_exclude_matcher_empty_patterns() {
         let patterns: Vec<String> = vec![];
         assert!(build_exclude_matcher(&patterns, Path::new("/project")).is_none());
