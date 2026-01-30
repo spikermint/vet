@@ -38,7 +38,7 @@ proptest! {
         prop_assert_eq!(secret1.fingerprint(), secret2.fingerprint());
     }
 
-    /// FindingId is always 8 hex characters.
+    /// FindingId is always 12 hex characters.
     #[test]
     fn finding_id_is_valid_hex(
         pattern_id in "[a-z]{3,10}/[a-z]{3,20}",
@@ -48,7 +48,7 @@ proptest! {
         let id = FindingId::new(&pattern_id, &secret);
         let id_str = id.as_str();
 
-        prop_assert_eq!(id_str.len(), 8);
+        prop_assert_eq!(id_str.len(), 12);
         prop_assert!(
             id_str.chars().all(|c| c.is_ascii_hexdigit()),
             "FindingId '{}' contains non-hex characters",

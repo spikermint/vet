@@ -32,7 +32,6 @@ clap_complete = "4.5"
 console = "0.16"
 criterion = "0.8"
 dialoguer = { version = "0.12", features = ["fuzzy-select"] }
-fnv = "1.0"
 gix = { version = "0.78" }
 globset = "0.4"
 ignore = "0.4"
@@ -44,6 +43,7 @@ rayon = "1.11"
 regex = "1.12"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+sha2 = "0.10"
 strip-ansi-escapes = "0.2"
 tempfile = "3.24"
 thiserror = "2.0"
