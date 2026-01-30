@@ -10,17 +10,17 @@ mod secret;
 mod span;
 
 use std::fmt;
-use std::hash::{Hash, Hasher};
 use std::path::Path;
 
-use fnv::FnvHasher;
 pub use secret::Secret;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 pub use span::Span;
 
 use crate::pattern::Severity;
 
-const FINDING_ID_LENGTH: usize = 8;
+const FINDING_ID_LENGTH: usize = 12;
+const FINDING_ID_BYTES: usize = FINDING_ID_LENGTH / 2;
 
 /// Indicates how likely a finding is to be a real secret versus a false positive.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -52,9 +52,9 @@ pub struct FindingId(Box<str>);
 impl FindingId {
     #[must_use]
     pub fn new(pattern_id: &str, secret: &Secret) -> Self {
-        let hash = hash_finding(pattern_id, secret);
-        let hex = format!("{hash:016x}");
-        Self(hex[..FINDING_ID_LENGTH].into())
+        let hash_bytes = compute_id_hash(pattern_id, secret);
+        let hex = bytes_to_hex(&hash_bytes);
+        Self(hex.into())
     }
 
     #[must_use]
@@ -81,11 +81,22 @@ impl fmt::Display for FindingId {
     }
 }
 
-fn hash_finding(pattern_id: &str, secret: &Secret) -> u64 {
-    let mut hasher = FnvHasher::default();
-    pattern_id.hash(&mut hasher);
-    secret.hash_into(&mut hasher);
-    hasher.finish()
+fn compute_id_hash(pattern_id: &str, secret: &Secret) -> [u8; FINDING_ID_BYTES] {
+    let mut hasher = Sha256::new();
+    hasher.update(pattern_id.as_bytes());
+    hasher.update(secret.fingerprint().to_le_bytes());
+    let hash = hasher.finalize();
+    #[allow(clippy::expect_used)]
+    hash[..FINDING_ID_BYTES].try_into().expect("SHA-256 produces 32 bytes")
+}
+
+fn bytes_to_hex(bytes: &[u8]) -> String {
+    use std::fmt::Write;
+    let mut s = String::with_capacity(bytes.len() * 2);
+    for &b in bytes {
+        let _ = write!(s, "{b:02x}");
+    }
+    s
 }
 
 #[derive(Debug, Clone)]
@@ -153,10 +164,10 @@ mod tests {
     }
 
     #[test]
-    fn finding_id_is_exactly_eight_hex_characters() {
+    fn finding_id_is_exactly_twelve_hex_characters() {
         let secret = Secret::new("test-secret");
         let id = FindingId::new("test/pattern", &secret);
-        assert_eq!(id.as_str().len(), 8);
+        assert_eq!(id.as_str().len(), 12);
     }
 
     #[test]

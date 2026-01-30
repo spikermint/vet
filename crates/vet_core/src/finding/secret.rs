@@ -1,7 +1,6 @@
 use std::fmt;
-use std::hash::{Hash, Hasher};
 
-use fnv::FnvHasher;
+use sha2::{Digest, Sha256};
 
 /// Secrets shorter than this are fully masked.
 const FULL_MASK_THRESHOLD: usize = 12;
@@ -31,7 +30,7 @@ impl Secret {
     #[must_use]
     pub fn new(raw: &str) -> Self {
         Self {
-            fingerprint: hash_raw(raw),
+            fingerprint: compute_fingerprint(raw),
             masked: mask_raw(raw).into(),
         }
     }
@@ -45,10 +44,6 @@ impl Secret {
     pub const fn fingerprint(&self) -> u64 {
         self.fingerprint
     }
-
-    pub(crate) fn hash_into(&self, hasher: &mut impl Hasher) {
-        self.fingerprint.hash(hasher);
-    }
 }
 
 impl fmt::Debug for Secret {
@@ -59,10 +54,11 @@ impl fmt::Debug for Secret {
     }
 }
 
-fn hash_raw(raw: &str) -> u64 {
-    let mut hasher = FnvHasher::default();
-    raw.hash(&mut hasher);
-    hasher.finish()
+fn compute_fingerprint(raw: &str) -> u64 {
+    let hash = Sha256::digest(raw.as_bytes());
+    #[allow(clippy::expect_used)]
+    let bytes: [u8; 8] = hash[..8].try_into().expect("SHA-256 produces 32 bytes");
+    u64::from_le_bytes(bytes)
 }
 
 fn mask_raw(raw: &str) -> String {
