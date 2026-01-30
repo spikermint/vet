@@ -41,6 +41,12 @@ impl VetLanguageServer {
             .unwrap_or_else(|| uri.path().to_string());
 
         if let Some(path) = &file_path {
+            // Skip files outside all workspace roots
+            if !state.workspace_roots.is_empty() && !state.workspace_roots.iter().any(|root| path.starts_with(root)) {
+                debug!("Skipped {} (outside workspace)", display_path);
+                return;
+            }
+
             if state.respect_gitignore
                 && let Some(root) = state.primary_workspace_root()
                 && exclusions::is_gitignored(state.gitignore.as_ref(), path, root)
@@ -166,5 +172,23 @@ mod tests {
         let uri = Url::parse("untitled:scratch.rs").unwrap();
         let fallback = PathBuf::from(uri.path());
         assert_eq!(fallback, PathBuf::from("scratch.rs"));
+    }
+
+    #[test]
+    fn path_outside_workspace_is_detected() {
+        let workspace_roots = [PathBuf::from("/home/user/project")];
+        let external_path = PathBuf::from("/home/user/.cargo/registry/src/crate/lib.rs");
+
+        let is_inside = workspace_roots.iter().any(|root| external_path.starts_with(root));
+        assert!(!is_inside);
+    }
+
+    #[test]
+    fn path_inside_workspace_is_detected() {
+        let workspace_roots = [PathBuf::from("/home/user/project")];
+        let internal_path = PathBuf::from("/home/user/project/src/main.rs");
+
+        let is_inside = workspace_roots.iter().any(|root| internal_path.starts_with(root));
+        assert!(is_inside);
     }
 }
