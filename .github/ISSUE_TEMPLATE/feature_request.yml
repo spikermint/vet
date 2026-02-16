@@ -1,0 +1,64 @@
+name: ✨ Feature Request
+description: Suggest a new feature or improvement.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: checkboxes
+    id: existing-issue
+    attributes:
+      label: Is there an existing issue for this?
+      description: Please search [existing issues](https://github.com/spikermint/vet/issues) before filing a new one.
+      options:
+        - label: I have searched the existing issues
+          required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Which part of vet does this relate to?
+      options:
+        - CLI
+        - VS Code Extension
+        - LSP Server
+        - Configuration (.vet.toml)
+        - Patterns / Detection
+        - Pre-commit Hook
+        - CI Integration
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What problem does this feature solve? What are you trying to do that you can't today?
+      placeholder: |
+        I want to scan only files that have changed since the last commit, but there's no
+        flag for this outside of `--staged`.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How do you think this should work? CLI flags, config options, UI behavior, etc.
+      placeholder: |
+        Add a `--changed` flag that scans files with uncommitted changes (both staged and unstaged).
+
+        ```bash
+        vet scan --changed
+        ```
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any alternative solutions or workarounds you've considered.
+    validations:
+      required: false

@@ -1,0 +1,88 @@
+name: 🔍 Pattern Request
+description: Request detection support for a new secret type.
+title: "[Pattern]: "
+labels: ["pattern-request"]
+body:
+  - type: checkboxes
+    id: existing-issue
+    attributes:
+      label: Is there an existing pattern or request for this?
+      description: Run `vet patterns` to check built-in patterns and search [existing issues](https://github.com/spikermint/vet/issues?q=label%3Apattern-request).
+      options:
+        - label: I have checked `vet patterns` and searched existing issues
+          required: true
+
+  - type: input
+    id: service
+    attributes:
+      label: Service / Provider
+      description: The name of the service or provider that issues this secret.
+      placeholder: "e.g. Shopify, Notion, Supabase"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: group
+    attributes:
+      label: Pattern group
+      description: Which category best fits this secret type?
+      options:
+        - AI
+        - Auth
+        - Cloud
+        - Database
+        - Email
+        - Infra
+        - Keys
+        - Messaging
+        - Packages
+        - Payments
+        - VCS
+        - Other / Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: format
+    attributes:
+      label: Secret format
+      description: |
+        Describe what the secret looks like. Include a prefix, length, character set, or a
+        redacted example if possible. **Do not paste real credentials.**
+      placeholder: |
+        Shopify Admin API tokens use the prefix `shpat_` followed by 32 hex characters.
+        Example: `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`
+    validations:
+      required: true
+
+  - type: input
+    id: docs
+    attributes:
+      label: Documentation link
+      description: Link to the service's API key or authentication docs.
+      placeholder: "https://shopify.dev/docs/api/admin-rest#authentication"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Suggested severity
+      description: How severe is exposure of this secret?
+      options:
+        - Critical - Full account compromise, financial, or infrastructure access
+        - High - Broad access to sensitive resources
+        - Medium - Limited scope or read-only access
+        - Low - Minimal impact or easily rotated
+        - Not sure
+      default: 4
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Anything else that would help - verification endpoints, rotation docs, whether the service offers token prefixes, etc.
+    validations:
+      required: false

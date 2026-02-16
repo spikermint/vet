@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 🔒 Report a Security Vulnerability
+    url: https://github.com/spikermint/vet/security/advisories/new
+    about: Report security vulnerabilities privately. Do not open a public issue.
+  - name: 💬 Questions & Discussion
+    url: https://github.com/spikermint/vet/discussions
+    about: Ask questions, share ideas, or get help from the community.

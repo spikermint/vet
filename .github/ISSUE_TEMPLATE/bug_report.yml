@@ -1,0 +1,87 @@
+name: 🐛 Bug Report
+description: Report a bug or unexpected behavior.
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: checkboxes
+    id: existing-issue
+    attributes:
+      label: Is there an existing issue for this?
+      description: Please search [existing issues](https://github.com/spikermint/vet/issues) before filing a new one.
+      options:
+        - label: I have searched the existing issues
+          required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Which part of vet is affected?
+      options:
+        - CLI
+        - VS Code Extension
+        - LSP Server
+        - Configuration (.vet.toml)
+        - Patterns / Detection
+        - Pre-commit Hook
+        - CI Integration
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear description of what happened and what you expected to happen.
+      placeholder: |
+        **What happened:**
+        vet scan reports no findings for a file containing a known AWS secret key.
+
+        **What I expected:**
+        The secret should be detected and reported as a finding.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Minimal steps to reproduce the behavior.
+      placeholder: |
+        1. Create a file `test.py` with contents `AWS_KEY = "AKIAIOSFODNN7EXAMPLE"`
+        2. Run `vet scan test.py`
+        3. Observe no findings reported
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Vet version
+      description: Output of `vet --version` (or VS Code extension version).
+      placeholder: "vet 0.3.1"
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, shell, editor version, or any other relevant context.
+      placeholder: |
+        - OS: macOS 15.2 (Apple Silicon)
+        - Shell: zsh 5.9
+        - VS Code: 1.96.0 (if applicable)
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: |
+        Paste any relevant logs or error output. For the CLI, try running with `--format json`.
+        For the VS Code extension, set `vet.logLevel` to `debug` and check the Output panel.
+      render: shell
+    validations:
+      required: false
