@@ -39,7 +39,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Install Knope
-        uses: knope-dev/action@v2.1.1
+        uses: knope-dev/action@v2.1.2
 
       - name: Prepare Release
         run: knope prepare-release --verbose
@@ -62,7 +62,7 @@ jobs:
           token: ${{ secrets.KNOPE_TOKEN }}
 
       - name: Install Knope
-        uses: knope-dev/action@v2.1.1
+        uses: knope-dev/action@v2.1.2
 
       - name: Release
         run: knope release --verbose
