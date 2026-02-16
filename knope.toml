@@ -1,0 +1,90 @@
+[package]
+versioned_files = ["Cargo.toml", "editors/vscode/package.json"]
+changelog = "CHANGELOG.md"
+extra_changelog_sections = [
+    { name = "Minor Changes", types = [
+        "feat",
+    ] },
+    { name = "Patch Changes", types = [
+        "fix",
+    ] },
+]
+
+[github]
+owner = "spikermint"
+repo = "vet"
+
+[[workflows]]
+name = "prepare-release"
+
+[[workflows.steps]]
+type = "Command"
+command = "git switch -C release"
+
+[[workflows.steps]]
+type = "PrepareRelease"
+
+[[workflows.steps]]
+type = "Command"
+command = "cargo generate-lockfile"
+
+[[workflows.steps]]
+type = "Command"
+command = "git add Cargo.lock"
+
+[[workflows.steps]]
+type = "Command"
+command = "npm install --package-lock-only --prefix editors/vscode"
+
+[[workflows.steps]]
+type = "Command"
+command = "git add editors/vscode/package-lock.json"
+
+[[workflows.steps]]
+type = "Command"
+command = "sed -i 's/## \\([0-9]*\\.[0-9]*\\.[0-9]*\\) ([0-9-]*)/## \\1/' CHANGELOG.md"
+
+[[workflows.steps]]
+type = "Command"
+command = "git add CHANGELOG.md"
+
+[[workflows.steps]]
+type = "Command"
+command = "git commit -m \"chore: release $version\""
+
+[[workflows.steps]]
+type = "Command"
+command = "git push --force origin release"
+
+[[workflows.steps]]
+type = "CreatePullRequest"
+base = "main"
+
+[workflows.steps.title]
+template = "chore: release $version"
+
+[workflows.steps.body]
+template = """
+## Release $version
+
+$changelog
+
+---
+Merging this PR will create a GitHub release with tag `v$version`.
+"""
+
+[[workflows]]
+name = "release"
+
+[[workflows.steps]]
+type = "Release"
+
+[[workflows.steps]]
+type = "Command"
+command = "gh release edit v$version --title \"v$version\""
+
+[[workflows]]
+name = "document-change"
+
+[[workflows.steps]]
+type = "CreateChangeFile"

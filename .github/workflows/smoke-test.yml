@@ -1,0 +1,43 @@
+name: Smoke Test
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Release Artifacts"]
+    types:
+      - completed
+
+jobs:
+  unix:
+    name: ${{ matrix.name }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: Linux x64, os: ubuntu-latest }
+          - { name: Linux arm64, os: ubuntu-24.04-arm }
+          - { name: macOS Intel, os: macos-15-intel }
+          - { name: macOS ARM, os: macos-latest }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install vet
+        run: |
+          ./scripts/install/install.sh
+          echo "$HOME/.vet/bin" >> $GITHUB_PATH
+      - run: ./scripts/smoke-test.sh
+
+  windows:
+    name: Windows x64
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install vet
+        shell: pwsh
+        run: |
+          ./scripts/install/install.ps1
+          echo "$env:USERPROFILE\.vet\bin" >> $env:GITHUB_PATH
+      - run: ./scripts/smoke-test.ps1
+        shell: pwsh

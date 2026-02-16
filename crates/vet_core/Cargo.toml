@@ -1,0 +1,38 @@
+[package]
+name = "vet_core"
+description = "Core scanning engine for vet secret scanner"
+publish = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+default = []
+tracing = ["dep:tracing"]
+
+[dependencies]
+aho-corasick.workspace = true
+chrono.workspace = true
+hex.workspace = true
+regex.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+thiserror.workspace = true
+toml.workspace = true
+tracing = { workspace = true, optional = true }
+vet_providers.workspace = true
+
+[dev-dependencies]
+criterion.workspace = true
+proptest.workspace = true
+tempfile.workspace = true
+
+[[bench]]
+name = "scanning"
+harness = false

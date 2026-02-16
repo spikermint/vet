@@ -1,0 +1,141 @@
+{
+  "name": "vet",
+  "displayName": "Vet",
+  "description": "Detect secrets in your code before they leak",
+  "version": "0.3.1",
+  "publisher": "vet",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/spikermint/vet"
+  },
+  "homepage": "https://github.com/spikermint/vet",
+  "bugs": {
+    "url": "https://github.com/spikermint/vet/issues"
+  },
+  "engines": {
+    "vscode": "^1.90.0",
+    "node": ">=22"
+  },
+  "categories": [
+    "Linters"
+  ],
+  "keywords": [
+    "security",
+    "secrets",
+    "credentials",
+    "scanner",
+    "api-keys"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "icon": "icon.png",
+  "contributes": {
+    "configuration": {
+      "title": "Vet",
+      "properties": {
+        "vet.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Vet secret scanning"
+        },
+        "vet.serverPath": {
+          "type": "string",
+          "default": "",
+          "scope": "machine-overridable",
+          "markdownDescription": "Path to `vet-lsp` binary. Leave empty to use the bundled server. Primarily useful for extension development."
+        },
+        "vet.minimumConfidence": {
+          "type": "string",
+          "enum": [
+            "low",
+            "high"
+          ],
+          "default": "high",
+          "description": "Minimum confidence level for reported findings. Set to 'low' to include likely placeholders or examples."
+        },
+        "vet.respectGitignore": {
+          "type": "boolean",
+          "default": true,
+          "description": "Skip files ignored by .gitignore"
+        },
+        "vet.logLevel": {
+          "type": "string",
+          "enum": [
+            "error",
+            "warn",
+            "info",
+            "debug",
+            "trace"
+          ],
+          "default": "info",
+          "description": "Server logging verbosity. Use 'debug' or 'trace' to help diagnose issues."
+        },
+        "vet.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Trace communication with the language server (for debugging)"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "vet.restart",
+        "title": "Restart Language Server",
+        "category": "Vet"
+      },
+      {
+        "command": "vet.ignoreInConfig",
+        "title": "Ignore in Config",
+        "category": "Vet"
+      },
+      {
+        "command": "vet.verifySecret",
+        "title": "Verify Secret",
+        "category": "Vet"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "npm run typecheck && node esbuild.js",
+    "watch": "npm-run-all -p watch:*",
+    "watch:esbuild": "node esbuild.js --watch",
+    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+    "package": "npm run typecheck && node esbuild.js --production",
+    "lint": "biome check src",
+    "lint:fix": "biome check --write src",
+    "format": "biome format --write src",
+    "typecheck": "tsc --noEmit",
+    "vscode:prepublish": "npm run package",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "npm run build:lsp && npm run compile:e2e && node out-test/e2e/runTest.js",
+    "compile:e2e": "tsc -p test/e2e/tsconfig.json",
+    "build:lsp": "cargo build --release --package vet_lsp -q && mkdir -p server && cp ../../target/release/vet-lsp server/vet-lsp-darwin-arm64"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^25.2.3",
+    "@types/vscode": "1.90.0",
+    "@vitest/coverage-v8": "^4.0.18",
+    "@vscode/test-electron": "^2.5.2",
+    "@vscode/vsce": "^3.7.1",
+    "esbuild": "^0.27.3",
+    "mocha": "^11.7.5",
+    "npm-run-all": "^4.1.5",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  }
+}

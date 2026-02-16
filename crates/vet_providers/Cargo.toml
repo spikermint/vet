@@ -1,0 +1,25 @@
+[package]
+name = "vet_providers"
+description = "Secret patterns and verification providers for vet"
+publish = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+chrono.workspace = true
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+regex.workspace = true
+wiremock.workspace = true
+tokio = { workspace = true, features = ["test-util"] }

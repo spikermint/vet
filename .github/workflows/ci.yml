@@ -1,0 +1,150 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          components: rustfmt, clippy
+
+      - name: Formatting
+        run: cargo fmt --all -- --check
+
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Docs
+        run: cargo doc --no-deps --all-features
+
+      - name: Install cargo-deny
+        uses: taiki-e/install-action@cargo-deny
+
+      - name: Supply chain audit
+        run: cargo deny check
+
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Tests
+        run: cargo test --all-features
+
+  build-lsp:
+    name: Build LSP
+    # NOTE: Linux builds use ubuntu-22.04 (not latest) to target glibc 2.35 for compatibility with older systems
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Build LSP
+        run: cargo build --release --package vet_lsp
+
+      - name: Upload LSP binary
+        uses: actions/upload-artifact@v6
+        with:
+          name: vet-lsp-linux-x64
+          path: target/release/vet-lsp
+          retention-days: 1
+
+  extension:
+    name: Extension
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: editors/vscode
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: editors/vscode/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Biome
+        run: npm run lint
+
+      - name: Tests
+        run: npm test
+
+  extension-e2e:
+    name: Extension E2E
+    needs: [extension, build-lsp]
+    # NOTE: Linux builds use ubuntu-22.04 (not latest) to target glibc 2.35 for compatibility with older systems
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: editors/vscode
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Download LSP binary
+        uses: actions/download-artifact@v7
+        with:
+          name: vet-lsp-linux-x64
+          path: editors/vscode/server
+
+      - name: Prepare LSP binary
+        run: |
+          chmod +x server/vet-lsp
+          mv server/vet-lsp server/vet-lsp-linux-x64
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: editors/vscode/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build extension
+        run: npm run compile
+
+      - name: E2E tests
+        run: xvfb-run -a npm run test:e2e

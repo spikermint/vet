@@ -1,0 +1,16 @@
+allow-unwrap-in-tests = true
+doc-valid-idents = [
+    "Aho-Corasick",
+    "CircleCI",
+    "DigitalOcean",
+    "GitHub",
+    "GitLab",
+    "HashiCorp",
+    "LaunchDarkly",
+    "OpenAI",
+    "PayPal",
+    "PlanetScale",
+    "PyPI",
+    "RubyGems",
+    "SendGrid",
+]

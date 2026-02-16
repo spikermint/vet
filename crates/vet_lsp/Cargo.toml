@@ -1,0 +1,35 @@
+[package]
+name = "vet_lsp"
+description = "Language Server Protocol implementation for vet secret scanner"
+publish = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[[bin]]
+name = "vet-lsp"
+path = "src/main.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+chrono.workspace = true
+gix.workspace = true
+globset.workspace = true
+ignore.workspace = true
+lru.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+tower-lsp.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+vet_core.workspace = true
+vet_providers.workspace = true
+
+[dev-dependencies]
+regex.workspace = true
+tempfile.workspace = true

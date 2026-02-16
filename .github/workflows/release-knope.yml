@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  prepare-release:
+    name: Prepare Release
+    # Run on push to main, but not when merging the release PR itself
+    if: >-
+      github.event_name == 'push' &&
+      !contains(github.event.head_commit.message, 'chore: release')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          # KNOPE_TOKEN is a GitHub PAT with repo scope, required for Knope to
+          # create branches and pull requests. The default GITHUB_TOKEN cannot
+          # trigger workflows when pushing branches or creating PRs.
+          token: ${{ secrets.KNOPE_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Install Knope
+        uses: knope-dev/action@v2.1.1
+
+      - name: Prepare Release
+        run: knope prepare-release --verbose
+        env:
+          GITHUB_TOKEN: ${{ secrets.KNOPE_TOKEN }}
+
+  release:
+    name: Release
+    # Run when the release PR is merged
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.merged == true &&
+      github.head_ref == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.KNOPE_TOKEN }}
+
+      - name: Install Knope
+        uses: knope-dev/action@v2.1.1
+
+      - name: Release
+        run: knope release --verbose
+        env:
+          GITHUB_TOKEN: ${{ secrets.KNOPE_TOKEN }}

@@ -1,0 +1,80 @@
+//! Database connection string patterns.
+
+mod planetscale;
+
+pub use planetscale::PlanetScaleProvider;
+
+crate::declare_provider!(
+    DatabaseProvider,
+    id: "database",
+    name: "Database Credentials",
+    group: Group::Database,
+    patterns: [
+        crate::pattern! {
+            id: "database/jdbc-uri",
+            group: Group::Database,
+            name: "JDBC Connection String",
+            description: "Grants database access to MySQL, PostgreSQL, Oracle, or SQL Server.",
+            severity: Severity::Critical,
+            regex: r#"(jdbc:[a-z0-9+]+://[^:]+:[^@]+@[^/\s"']+)"#,
+            keywords: &["jdbc:"],
+            default_enabled: true,
+            min_entropy: Some(3.0),
+        },
+        crate::pattern! {
+            id: "database/mongodb-uri",
+            group: Group::Database,
+            name: "MongoDB Connection String",
+            description: "Grants full database read/write access.",
+            severity: Severity::Critical,
+            regex: r#"(mongodb(?:\+srv)?://[^:]+:[^@]+@[^/\s"']+)"#,
+            keywords: &["mongodb://", "mongodb+srv://"],
+            default_enabled: true,
+            min_entropy: Some(3.0),
+        },
+        crate::pattern! {
+            id: "database/mssql-uri",
+            group: Group::Database,
+            name: "SQL Server Connection String",
+            description: "Grants database access to SQL Server instances.",
+            severity: Severity::Critical,
+            regex: r#"(sqlserver://[^:]+:[^@]+@[^/\s"']+)"#,
+            keywords: &["sqlserver://"],
+            default_enabled: true,
+            min_entropy: Some(3.0),
+        },
+        crate::pattern! {
+            id: "database/mysql-uri",
+            group: Group::Database,
+            name: "MySQL Connection String",
+            description: "Grants database access for queries and administration.",
+            severity: Severity::Critical,
+            regex: r#"(mysql://[^:]+:[^@]+@[^/\s"']+)"#,
+            keywords: &["mysql://"],
+            default_enabled: true,
+            min_entropy: Some(3.0),
+        },
+        crate::pattern! {
+            id: "database/postgres-uri",
+            group: Group::Database,
+            name: "PostgreSQL Connection String",
+            description: "Grants database access for queries and schema changes.",
+            severity: Severity::Critical,
+            regex: r#"(postgres(?:ql)?://[^:]+:[^@]+@[^/\s"']+)"#,
+            keywords: &["postgresql://", "postgres://"],
+            default_enabled: true,
+            min_entropy: Some(3.0),
+        },
+        crate::pattern! {
+            id: "database/redis-uri",
+            group: Group::Database,
+            name: "Redis Connection String",
+            description: "Grants access to cache data and session state.",
+            severity: Severity::Critical,
+            regex: r#"(rediss?://[^:]+:[^@]+@[^/\s"']+)"#,
+            keywords: &["redis://", "rediss://"],
+            default_enabled: true,
+            min_entropy: Some(3.0),
+        },
+    ],
+);

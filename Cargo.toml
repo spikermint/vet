@@ -1,0 +1,110 @@
+[workspace]
+members = ["crates/*"]
+resolver = "3"
+
+[workspace.package]
+version = "0.3.1"
+edition = "2024"
+license = "MIT"
+repository = "https://github.com/spikermint/vet"
+authors = ["Tim Perkins"]
+rust-version = "1.85"
+
+[workspace.lints.rust]
+ambiguous_negative_literals = "warn"
+missing_debug_implementations = "warn"
+missing_docs = "deny"
+redundant_imports = "warn"
+redundant_lifetimes = "warn"
+trivial_numeric_casts = "warn"
+unsafe_code = "deny"
+unsafe_op_in_unsafe_fn = "warn"
+unused_lifetimes = "warn"
+
+[workspace.lints.clippy]
+cargo = { level = "warn", priority = -1 }
+complexity = { level = "warn", priority = -1 }
+correctness = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+perf = { level = "warn", priority = -1 }
+style = { level = "warn", priority = -1 }
+suspicious = { level = "warn", priority = -1 }
+
+expect_used = "deny"
+panic = "deny"
+unwrap_used = "deny"
+
+allow_attributes_without_reason = "warn"
+clone_on_ref_ptr = "warn"
+empty_enum_variants_with_brackets = "warn"
+empty_structs_with_brackets = "warn"
+map_err_ignore = "warn"
+undocumented_unsafe_blocks = "warn"
+unused_result_ok = "warn"
+
+cargo_common_metadata = "allow"
+literal_string_with_formatting_args = "allow"
+missing_errors_doc = "allow"
+module_name_repetitions = "allow"
+multiple_crate_versions = "allow"
+struct_excessive_bools = "allow"
+
+[workspace.dependencies]
+aho-corasick = "1.1"
+anyhow = "1.0"
+assert_cmd = "2.1"
+chrono = { version = "0.4", default-features = false, features = [
+    "std",
+    "clock",
+    "serde",
+] }
+clap = { version = "4.5", features = ["derive", "color", "help"] }
+clap_complete = "4.5"
+console = "0.16"
+criterion = "0.8"
+dialoguer = { version = "0.12", features = ["fuzzy-select"] }
+gix = { version = "0.79" }
+globset = "0.4"
+hex = "0.4"
+ignore = "0.4"
+memmap2 = "0.9"
+mimalloc = "0.1"
+lru = "0.16"
+indicatif = "0.18"
+insta = { version = "1.46", features = ["filters"] }
+predicates = "3.1"
+proptest = "1.10"
+rayon = "1.11"
+regex = "1.12"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sha2 = "0.10"
+strip-ansi-escapes = "0.2"
+tempfile = "3.25"
+thiserror = "2.0"
+tokio = { version = "1.49", features = ["full"] }
+toml = "1.0"
+tower-lsp = "0.20"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+vet_core = { path = "crates/vet_core" }
+vet_providers = { path = "crates/vet_providers" }
+reqwest = { version = "0.13", default-features = false, features = [
+    "json",
+    "query",
+    "rustls",
+] }
+wiremock = "0.6"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+panic = "abort"
+strip = "symbols"
+
+[profile.bench]
+debug = 1
+
+[profile.dev.package."*"]
+opt-level = 2

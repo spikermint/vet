@@ -1,0 +1,154 @@
+name: Release VSCode Extension
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-lsp:
+    name: Build LSP (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      # NOTE: Linux builds use ubuntu-22.04 (not latest) to target glibc 2.35 for compatibility with older systems
+      matrix:
+        include:
+          # Linux x64
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            artifact: vet-lsp-linux-x64
+
+          # Linux ARM64
+          - os: ubuntu-22.04
+            target: aarch64-unknown-linux-gnu
+            artifact: vet-lsp-linux-arm64
+            cross: true
+
+          # macOS x64 (Intel)
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact: vet-lsp-darwin-x64
+
+          # macOS ARM64 (Apple Silicon)
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact: vet-lsp-darwin-arm64
+
+          # Windows x64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact: vet-lsp-windows-x64.exe
+
+          # Windows ARM64
+          - os: windows-latest
+            target: aarch64-pc-windows-msvc
+            artifact: vet-lsp-windows-arm64.exe
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          target: ${{ matrix.target }}
+
+      - name: Install cross-compilation tools (Linux ARM64)
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> "$GITHUB_ENV"
+
+      - name: Build LSP
+        run: cargo build --release --package vet_lsp --target ${{ matrix.target }}
+
+      - name: Prepare artifact (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          cp "target/${{ matrix.target }}/release/vet-lsp" "${{ matrix.artifact }}"
+          chmod +x "${{ matrix.artifact }}"
+
+      - name: Prepare artifact (Windows)
+        if: runner.os == 'Windows'
+        run: Copy-Item "target/${{ matrix.target }}/release/vet-lsp.exe" "${{ matrix.artifact }}"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.artifact }}
+          if-no-files-found: error
+
+  publish:
+    name: Publish (${{ matrix.target }})
+    needs: build-lsp
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Linux x64
+          - target: linux-x64
+            artifact: vet-lsp-linux-x64
+
+          # Linux ARM64
+          - target: linux-arm64
+            artifact: vet-lsp-linux-arm64
+
+          # macOS x64 (Intel)
+          - target: darwin-x64
+            artifact: vet-lsp-darwin-x64
+
+          # macOS ARM64 (Apple Silicon)
+          - target: darwin-arm64
+            artifact: vet-lsp-darwin-arm64
+
+          # Windows x64
+          - target: win32-x64
+            artifact: vet-lsp-windows-x64.exe
+
+          # Windows ARM64
+          - target: win32-arm64
+            artifact: vet-lsp-windows-arm64.exe
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: editors/vscode/package-lock.json
+
+      - name: Download LSP binary
+        uses: actions/download-artifact@v7
+        with:
+          name: ${{ matrix.artifact }}
+          path: editors/vscode/server
+
+      - name: Set executable permissions
+        run: chmod +x editors/vscode/server/*
+
+      - name: Install dependencies
+        working-directory: editors/vscode
+        run: npm ci
+
+      - name: Publish to Marketplace
+        working-directory: editors/vscode
+        run: npx vsce publish --target ${{ matrix.target }}
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}

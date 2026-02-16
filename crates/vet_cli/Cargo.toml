@@ -1,0 +1,49 @@
+[package]
+name = "vet_cli"
+description = "CLI for vet secret scanner"
+publish = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[[bin]]
+name = "vet"
+path = "src/main.rs"
+
+[lints]
+workspace = true
+
+[features]
+default = ["tracing"]
+tracing = ["vet_core/tracing", "dep:tracing", "dep:tracing-subscriber"]
+
+[dependencies]
+anyhow.workspace = true
+chrono.workspace = true
+clap.workspace = true
+clap_complete.workspace = true
+console.workspace = true
+dialoguer.workspace = true
+gix.workspace = true
+globset.workspace = true
+ignore.workspace = true
+memmap2.workspace = true
+mimalloc.workspace = true
+indicatif.workspace = true
+rayon.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+vet_core.workspace = true
+vet_providers.workspace = true
+tracing = { workspace = true, optional = true }
+tracing-subscriber = { workspace = true, optional = true }
+
+[dev-dependencies]
+assert_cmd.workspace = true
+insta.workspace = true
+predicates.workspace = true
+serde_json.workspace = true
+tempfile.workspace = true
