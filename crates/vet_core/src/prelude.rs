@@ -4,5 +4,5 @@ pub use crate::baseline::{Baseline, BaselineError, BaselineFinding, BaselineStat
 pub use crate::config::{Config, ConfigError};
 pub use crate::error::{PatternError, VetError};
 pub use crate::finding::{Confidence, Finding, FindingId, Secret, Span};
-pub use crate::pattern::{Group, Pattern, PatternRegistry, Severity};
+pub use crate::pattern::{DetectionStrategy, Group, Pattern, PatternRegistry, Severity};
 pub use crate::scanner::Scanner;

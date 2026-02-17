@@ -184,6 +184,19 @@ impl fmt::Display for Group {
     }
 }
 
+/// How a pattern finds matches in source files.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DetectionStrategy {
+    /// Standard pipeline: Aho-Corasick → regex → entropy → Finding.
+    /// Used by all prefix-matched and format-matched patterns.
+    Regex,
+
+    /// AST pipeline: Aho-Corasick → tree-sitter query → entropy → Finding.
+    /// Finds string literal assignments to variables matching trigger words.
+    /// Falls back to regex for `.env` files. Skips unsupported languages.
+    AstAssignment,
+}
+
 /// A single pattern definition for detecting a specific type of secret.
 #[derive(Debug, Clone)]
 pub struct PatternDef {
@@ -207,9 +220,12 @@ pub struct PatternDef {
     pub min_entropy: Option<f64>,
     /// Whether this pattern supports live verification.
     pub verifiable: bool,
+    /// How this pattern detects secrets. Defaults to `Regex` for standard patterns.
+    pub strategy: DetectionStrategy,
 }
 
-/// Creates a `PatternDef` with `verifiable` defaulting to `false`.
+/// Creates a `PatternDef` with `verifiable` defaulting to `false` and `strategy`
+/// defaulting to `DetectionStrategy::Regex`.
 #[macro_export]
 macro_rules! pattern {
     (
@@ -234,6 +250,7 @@ macro_rules! pattern {
             default_enabled: $enabled,
             min_entropy: $entropy,
             verifiable: false,
+            strategy: $crate::pattern::DetectionStrategy::Regex,
         }
     };
     (
@@ -259,6 +276,33 @@ macro_rules! pattern {
             default_enabled: $enabled,
             min_entropy: $entropy,
             verifiable: $verifiable,
+            strategy: $crate::pattern::DetectionStrategy::Regex,
+        }
+    };
+    (
+        id: $id:expr,
+        group: $group:expr,
+        name: $name:expr,
+        description: $description:expr,
+        severity: $severity:expr,
+        regex: $regex:expr,
+        keywords: $keywords:expr,
+        default_enabled: $enabled:expr,
+        min_entropy: $entropy:expr,
+        strategy: $strategy:expr $(,)?
+    ) => {
+        $crate::pattern::PatternDef {
+            id: $id,
+            group: $group,
+            name: $name,
+            description: $description,
+            severity: $severity,
+            regex: $regex,
+            keywords: $keywords,
+            default_enabled: $enabled,
+            min_entropy: $entropy,
+            verifiable: false,
+            strategy: $strategy,
         }
     };
 }

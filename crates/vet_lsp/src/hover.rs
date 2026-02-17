@@ -84,6 +84,7 @@ mod tests {
             keywords: vec![].into(),
             default_enabled: true,
             min_entropy: None,
+            strategy: DetectionStrategy::Regex,
         }
     }
 

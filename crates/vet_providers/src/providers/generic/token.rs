@@ -14,8 +14,9 @@ crate::declare_provider!(
             severity: Severity::Medium,
             regex: r#"(?i)(?:[\w.-]+[_.\-])?(?:access[_.\-]?token|auth[_.\-]?token|bearer[_.\-]?token|refresh[_.\-]?token)(?:[_.\-][\w]*)?\s*(?:=|:|=>|:=)\s*['"`]([^\s'"`]{8,120})['"`]"#,
             keywords: &["access_token", "auth_token", "bearer_token", "refresh_token"],
-            default_enabled: false,
+            default_enabled: true,
             min_entropy: Some(4.0),
+            strategy: crate::pattern::DetectionStrategy::AstAssignment,
         },
     ],
 );

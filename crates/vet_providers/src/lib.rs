@@ -10,7 +10,7 @@ pub mod providers;
 mod registry;
 mod verify;
 
-pub use pattern::{Group, ParseSeverityError, PatternDef, Severity};
+pub use pattern::{DetectionStrategy, Group, ParseSeverityError, PatternDef, Severity};
 pub use provider::Provider;
 pub use registry::ProviderRegistry;
 pub use verify::{SecretVerifier, ServiceInfo, VerificationError, VerificationResult, VerificationStatus};
