@@ -13,7 +13,7 @@ crate::declare_provider!(
             description: "Grants access to an unidentified service via a hardcoded access or auth token.",
             severity: Severity::Medium,
             regex: r#"(?i)(?:[\w.-]+[_.\-])?(?:access[_.\-]?token|auth[_.\-]?token|bearer[_.\-]?token|refresh[_.\-]?token)(?:[_.\-][\w]*)?\s*(?:=|:|=>|:=)\s*['"`]([^\s'"`]{8,120})['"`]"#,
-            keywords: &["access_token", "auth_token", "bearer_token", "refresh_token"],
+            keywords: &["token", "access_token", "auth_token", "bearer_token", "refresh_token"],
             default_enabled: true,
             min_entropy: Some(4.0),
             strategy: crate::pattern::DetectionStrategy::AstAssignment,

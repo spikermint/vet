@@ -1,9 +1,11 @@
 //! Trigger word matching with segment boundary enforcement.
 //!
 //! Trigger words must appear as complete segments within variable names,
-//! separated by `_`, `.`, `-`, a camelCase boundary, or at the start/end of
-//! the identifier. For example, `DB_PASSWORD` and `dbPassword` both match the
-//! `password` trigger, but `passport` does not.
+//! separated by `_`, `.`, `-`, a case boundary, or at the start/end of the
+//! identifier. Case boundaries include both camelCase (`dbPassword`) and
+//! acronym-prefixed names (`DBPassword`, `HTTPSecret`). For example,
+//! `DB_PASSWORD`, `dbPassword`, and `DBPassword` all match the `password`
+//! trigger, but `passport` does not.
 //!
 //! Without boundaries, short trigger words produce false positives on
 //! unrelated variable names: `token` matches `tokenizer`, `secret` matches
@@ -36,14 +38,14 @@ impl TriggerWordGroup {
 /// Checks whether any trigger word from the group appears as a segment-bounded
 /// match within the given variable name.
 ///
-/// A segment boundary is `_`, `.`, `-`, a camelCase transition (lowercase to
-/// uppercase), or the start/end of the string. The comparison is
-/// case-insensitive.
+/// A segment boundary is `_`, `.`, `-`, a case boundary, or the start/end of
+/// the string. The comparison is case-insensitive.
 ///
 /// # Examples
 ///
 /// - `DB_PASSWORD` matches trigger `password` (preceded by `_`)
-/// - `dbPassword` matches trigger `password` (camelCase boundary)
+/// - `dbPassword` matches trigger `password` (case boundary: lowercase → uppercase)
+/// - `DBPassword` matches trigger `password` (case boundary: acronym → word)
 /// - `passport` does **not** match (no boundary before `password`)
 /// - `password` matches (at start and end)
 /// - `api.password.value` matches (bounded by `.`)
@@ -60,23 +62,40 @@ fn is_delimiter(b: u8) -> bool {
     matches!(b, b'_' | b'.' | b'-')
 }
 
-/// Detects a camelCase word boundary (lowercase → Uppercase transition).
+/// Returns `true` if position `idx` starts a new word based on a case transition.
 ///
-/// This intentionally does NOT handle abbreviation boundaries like
-/// `DBPassword` or `HTTPSecret` (uppercase-uppercase-lowercase). That
-/// pattern is rare in practice — style guides prefer `dbPassword`, and
-/// abbreviation prefixes almost always use `snake_case` (`DB_PASSWORD`).
-/// The added complexity of forward-peeking isn't justified.
-fn is_camel_boundary(original: &[u8], idx: usize) -> bool {
-    idx > 0 && original[idx].is_ascii_uppercase() && original[idx - 1].is_ascii_lowercase()
+/// ```text
+/// dbPassword    →  boundary at P  (lowercase 'b' then uppercase 'P')
+/// DBPassword    →  boundary at P  (uppercase 'B' then uppercase 'P' followed by lowercase 'a')
+/// HTTPSecret    →  boundary at S
+/// DB            →  no boundary (all uppercase, no lowercase follower)
+/// ```
+///
+/// Works on the original (non-lowered) bytes so case information is preserved.
+fn is_case_boundary(original: &[u8], idx: usize) -> bool {
+    if idx == 0 || !original[idx].is_ascii_uppercase() {
+        return false;
+    }
+
+    let prev = original[idx - 1];
+
+    // "db|Password" - lowercase followed by uppercase always starts a new word
+    if prev.is_ascii_lowercase() {
+        return true;
+    }
+
+    // "DB|Password" - inside a run of uppercase letters, a new word starts
+    // when the current uppercase letter is followed by a lowercase letter
+    // (i.e. it's the first letter of a word, not the middle of an acronym)
+    prev.is_ascii_uppercase() && original.get(idx + 1).is_some_and(u8::is_ascii_lowercase)
 }
 
 fn is_segment_start(lowered: &[u8], original: &[u8], idx: usize) -> bool {
-    idx == 0 || is_delimiter(lowered[idx - 1]) || is_camel_boundary(original, idx)
+    idx == 0 || is_delimiter(lowered[idx - 1]) || is_case_boundary(original, idx)
 }
 
 fn is_segment_end(lowered: &[u8], original: &[u8], idx: usize) -> bool {
-    idx == lowered.len() || is_delimiter(lowered[idx]) || is_camel_boundary(original, idx)
+    idx == lowered.len() || is_delimiter(lowered[idx]) || is_case_boundary(original, idx)
 }
 
 fn contains_as_segment(haystack: &str, original: &[u8], needle: &str) -> bool {
@@ -209,6 +228,22 @@ mod tests {
     #[test]
     fn matches_camel_case_start() {
         assert!(matches_trigger("PasswordHash", &password_group()));
+    }
+
+    #[test]
+    fn matches_abbreviation_prefix() {
+        assert!(matches_trigger("DBPassword", &password_group()));
+    }
+
+    #[test]
+    fn matches_abbreviation_prefix_with_secret() {
+        let group = TriggerWordGroup::from_static("generic/secret-assignment", &["secret"]);
+        assert!(matches_trigger("HTTPSecret", &group));
+    }
+
+    #[test]
+    fn matches_abbreviation_prefix_with_api_key() {
+        assert!(matches_trigger("AWSApikey", &api_key_group()));
     }
 
     #[test]

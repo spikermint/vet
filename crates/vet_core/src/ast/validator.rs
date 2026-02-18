@@ -134,7 +134,9 @@ pub fn extract_ast_findings(
             continue;
         };
 
-        // Strip surrounding quotes if the query captures the full string node
+        // Strip surrounding quotes - dict/map/hash keys capture the full
+        // string node (e.g. `"password"`) while identifiers have no quotes.
+        let clean_name = strip_string_quotes(name);
         let clean_value = strip_string_quotes(value);
 
         if clean_value.len() < 8 || clean_value.len() > 120 {
@@ -142,10 +144,10 @@ pub fn extract_ast_findings(
         }
 
         for group in trigger_groups {
-            if matches_trigger(name, group) {
+            if matches_trigger(clean_name, group) {
                 findings.push(AstFinding {
                     pattern_id: Arc::clone(&group.pattern_id),
-                    variable_name: name.to_string(),
+                    variable_name: clean_name.to_string(),
                     secret_value: clean_value.to_string(),
                     byte_start: value_start,
                     byte_end: value_end,
@@ -185,8 +187,15 @@ mod tests {
         TriggerWordGroup::from_static("generic/secret-assignment", &["secret", "credential"])
     }
 
+    fn token_group() -> TriggerWordGroup {
+        TriggerWordGroup::from_static(
+            "generic/token-assignment",
+            &["token", "access_token", "auth_token", "bearer_token", "refresh_token"],
+        )
+    }
+
     fn groups() -> Vec<TriggerWordGroup> {
-        vec![password_group(), secret_group()]
+        vec![password_group(), secret_group(), token_group()]
     }
 
     // Python tests
@@ -294,6 +303,22 @@ mod tests {
         assert_eq!(findings.len(), 1);
     }
 
+    #[test]
+    fn javascript_camel_case_token_detected() {
+        let code = b"const authToken = \"cX2mN8pQ4rT7vB5wK3eR\";";
+        let findings = extract_ast_findings(code, SourceLanguage::JavaScript, &groups());
+        assert_eq!(findings.len(), 1);
+        assert_eq!(findings[0].pattern_id.as_ref(), "generic/token-assignment");
+    }
+
+    #[test]
+    fn javascript_camel_case_access_token_detected() {
+        let code = b"const accessToken = \"fT9nR2mK7jQ4vB8wP3xL\";";
+        let findings = extract_ast_findings(code, SourceLanguage::JavaScript, &groups());
+        assert_eq!(findings.len(), 1);
+        assert_eq!(findings[0].pattern_id.as_ref(), "generic/token-assignment");
+    }
+
     // Go tests
 
     #[test]
@@ -302,6 +327,15 @@ mod tests {
         let findings = extract_ast_findings(code, SourceLanguage::Go, &groups());
         assert_eq!(findings.len(), 1);
         assert_eq!(findings[0].secret_value, "a8Kj2mNx9pQ4rT7v");
+    }
+
+    #[test]
+    fn go_map_literal_string_key_detected() {
+        let code = b"package main\nfunc main() {\n\tconfig := map[string]string{\n\t\t\"password\": \"gM4nR8vP2jL9nQ5wK3bT\",\n\t}\n}";
+        let findings = extract_ast_findings(code, SourceLanguage::Go, &groups());
+        assert_eq!(findings.len(), 1);
+        assert_eq!(findings[0].variable_name, "password");
+        assert_eq!(findings[0].secret_value, "gM4nR8vP2jL9nQ5wK3bT");
     }
 
     #[test]
