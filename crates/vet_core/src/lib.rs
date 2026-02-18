@@ -21,6 +21,8 @@
 //!
 //! The CLI crate (`vet_cli`) uses `anyhow` for error propagation.
 
+/// AST-powered generic secret detection using tree-sitter.
+pub mod ast;
 /// Baseline tracking for acknowledged secrets.
 pub mod baseline;
 /// Binary file detection heuristics.
@@ -53,7 +55,7 @@ pub use baseline::{Baseline, BaselineError, BaselineFinding, BaselineStatus, Fin
 pub use config::{Config, ConfigError, ConfigIgnore, CustomPattern};
 pub use error::{PatternError, VetError};
 pub use finding::{Confidence, Finding, FindingId, Secret, Span};
-pub use pattern::{Group, Pattern, PatternRegistry, Severity};
+pub use pattern::{DetectionStrategy, Group, Pattern, PatternRegistry, Severity};
 pub use protocol::{
     DiagnosticData, DiagnosticVerification, ExposureRisk, HoverData, RemediationInfo, VerificationInfo,
 };

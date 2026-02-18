@@ -76,5 +76,16 @@ crate::declare_provider!(
             default_enabled: true,
             min_entropy: Some(3.0),
         },
+        crate::pattern! {
+            id: "database/amqp-uri",
+            group: Group::Database,
+            name: "AMQP Connection String",
+            description: "Grants access to RabbitMQ or other AMQP message brokers.",
+            severity: Severity::Critical,
+            regex: r#"(amqps?://[^:]+:[^@]+@[^/\s"']+)"#,
+            keywords: &["amqp://", "amqps://"],
+            default_enabled: true,
+            min_entropy: Some(3.0),
+        },
     ],
 );

@@ -9,7 +9,7 @@ use regex::Regex;
 
 use crate::error::PatternError;
 
-pub use vet_providers::{Group, Severity};
+pub use vet_providers::{DetectionStrategy, Group, Severity};
 
 /// A compiled secret detection pattern ready for scanning.
 ///
@@ -39,6 +39,8 @@ pub struct Pattern {
     /// Minimum Shannon entropy for a match to be classified as high confidence.
     /// When `None`, all matches are treated as high confidence.
     pub min_entropy: Option<f64>,
+    /// How this pattern detects secrets (regex or AST-based).
+    pub strategy: DetectionStrategy,
 }
 
 impl Pattern {
@@ -58,6 +60,7 @@ impl Pattern {
             keywords: def.keywords.iter().map(|&k| k.into()).collect(),
             default_enabled: def.default_enabled,
             min_entropy: def.min_entropy,
+            strategy: def.strategy,
         })
     }
 

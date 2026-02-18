@@ -5,7 +5,7 @@ use std::path::Path;
 use regex::Regex;
 
 use crate::finding::{Confidence, Finding, FindingId, Secret, Span};
-use crate::pattern::{Group, Pattern, Severity};
+use crate::pattern::{DetectionStrategy, Group, Pattern, Severity};
 
 fn base_pattern(id: &str, regex: &str) -> Pattern {
     Pattern {
@@ -18,6 +18,7 @@ fn base_pattern(id: &str, regex: &str) -> Pattern {
         keywords: vec![].into(),
         default_enabled: true,
         min_entropy: None,
+        strategy: DetectionStrategy::Regex,
     }
 }
 

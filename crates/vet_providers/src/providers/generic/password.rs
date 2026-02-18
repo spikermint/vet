@@ -14,8 +14,9 @@ crate::declare_provider!(
             severity: Severity::Medium,
             regex: r#"(?i)(?:[\w.-]+[_.\-])(?:password|passwd|pwd)(?:[_.\-][\w]*)?\s*(?:=|:|=>|:=)\s*['"`]([^\s'"`]{8,120})['"`]"#,
             keywords: &["password", "passwd", "pwd"],
-            default_enabled: false,
+            default_enabled: true,
             min_entropy: Some(4.0),
+            strategy: crate::pattern::DetectionStrategy::AstAssignment,
         },
     ],
 );

@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::PatternError;
 use crate::finding::Confidence;
-use crate::pattern::{Group, Pattern, Severity};
+use crate::pattern::{DetectionStrategy, Group, Pattern, Severity};
 
 /// A finding that the user has explicitly acknowledged and suppressed.
 ///
@@ -112,6 +112,7 @@ impl CustomPattern {
             keywords: self.keywords.iter().map(|s| s.as_str().into()).collect(),
             default_enabled: true,
             min_entropy: self.min_entropy,
+            strategy: DetectionStrategy::Regex,
         })
     }
 }

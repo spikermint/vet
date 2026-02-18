@@ -10,7 +10,7 @@ use crate::binary::is_binary_content;
 use crate::comment_syntax::IGNORE_MARKER;
 use crate::entropy::shannon_entropy;
 use crate::finding::{Confidence, Finding, FindingId, Secret, Span};
-use crate::pattern::{Group, Pattern, PatternRegistry, Severity};
+use crate::pattern::{DetectionStrategy, Group, Pattern, PatternRegistry, Severity};
 use crate::text::{find_line_end, find_line_start};
 
 /// Secret scanning engine that matches file content against a `PatternRegistry`.
@@ -95,6 +95,8 @@ impl Scanner {
         }
 
         self.run_patterns_into(content, path, &patterns_to_check, findings);
+
+        self.run_ast_patterns_into(content, path, &patterns_to_check, findings);
     }
 
     fn select_patterns_to_run(&self, content: &str) -> Vec<bool> {
@@ -130,7 +132,95 @@ impl Scanner {
                 continue;
             }
 
+            if pattern.strategy == DetectionStrategy::AstAssignment {
+                continue;
+            }
+
             scan_with_pattern_into(content, path, pattern, findings);
+        }
+    }
+
+    /// Runs AST-based patterns whose keywords were triggered.
+    ///
+    /// Collects all active `AstAssignment` patterns, builds trigger word groups,
+    /// and dispatches to the AST module for extraction.
+    fn run_ast_patterns_into(
+        &self,
+        content: &str,
+        path: &Path,
+        patterns_to_check: &[bool],
+        findings: &mut Vec<Finding>,
+    ) {
+        use crate::ast;
+        use crate::ast::trigger::TriggerWordGroup;
+
+        let mut trigger_groups: Vec<(TriggerWordGroup, usize)> = Vec::new();
+
+        for (idx, &should_check) in patterns_to_check.iter().enumerate() {
+            if !should_check {
+                continue;
+            }
+
+            let Some(pattern) = self.registry.get_by_index(idx) else {
+                continue;
+            };
+
+            if !self.should_run_pattern(pattern) {
+                continue;
+            }
+
+            if pattern.strategy != DetectionStrategy::AstAssignment {
+                continue;
+            }
+
+            let group = TriggerWordGroup {
+                pattern_id: Arc::clone(&pattern.id),
+                words: pattern.keywords.clone(),
+            };
+
+            trigger_groups.push((group, idx));
+        }
+
+        if trigger_groups.is_empty() {
+            return;
+        }
+
+        let groups: Vec<TriggerWordGroup> = trigger_groups.iter().map(|(g, _)| g.clone()).collect();
+        let ast_findings = ast::extract_generic_findings(content.as_bytes(), path, &groups);
+
+        for ast_finding in ast_findings {
+            if is_line_ignored(content, ast_finding.byte_start) {
+                continue;
+            }
+
+            let confidence = determine_confidence(&ast_finding.secret_value, Some(4.0));
+
+            let Some(matching_pattern) = trigger_groups
+                .iter()
+                .find(|(g, _)| g.pattern_id == ast_finding.pattern_id)
+                .and_then(|(_, idx)| self.registry.get_by_index(*idx))
+            else {
+                continue;
+            };
+
+            let finding = create_finding(
+                content,
+                path,
+                matching_pattern,
+                ast_finding.byte_start,
+                ast_finding.byte_end,
+                confidence,
+            );
+
+            #[cfg(feature = "tracing")]
+            trace!(
+                pattern_id = %matching_pattern.id,
+                variable = %ast_finding.variable_name,
+                line = finding.span.line,
+                "ast match"
+            );
+
+            findings.push(finding);
         }
     }
 
