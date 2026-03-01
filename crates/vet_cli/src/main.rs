@@ -19,7 +19,6 @@ mod ui;
 use std::path::PathBuf;
 
 use clap::{CommandFactory, FromArgMatches, Parser, Subcommand};
-use clap_complete::Shell;
 use console::style;
 pub use vet_core::CONFIG_FILENAME;
 use vet_core::prelude::*;
@@ -70,11 +69,6 @@ enum Command {
     Hook {
         #[command(subcommand)]
         command: Option<HookCommand>,
-    },
-
-    Completions {
-        #[arg(value_enum)]
-        shell: Shell,
     },
 }
 
@@ -388,10 +382,6 @@ fn parse_cli() -> Cli {
 
 fn run(command: Command) -> anyhow::Result<()> {
     match command {
-        Command::Completions { shell } => {
-            clap_complete::generate(shell, &mut Cli::command(), "vet", &mut std::io::stdout());
-            Ok(())
-        }
         Command::Fix(args) => commands::fix::run(
             &args.paths,
             args.config.as_deref(),
