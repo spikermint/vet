@@ -23,7 +23,6 @@ tracing = ["vet_core/tracing", "dep:tracing", "dep:tracing-subscriber"]
 anyhow.workspace = true
 chrono.workspace = true
 clap.workspace = true
-clap_complete.workspace = true
 console.workspace = true
 dialoguer.workspace = true
 gix.workspace = true
