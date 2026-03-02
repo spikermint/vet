@@ -123,7 +123,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Download LSP binary
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: vet-lsp-linux-x64
           path: editors/vscode/server
