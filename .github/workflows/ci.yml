@@ -75,7 +75,7 @@ jobs:
         run: cargo build --release --package vet_lsp
 
       - name: Upload LSP binary
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: vet-lsp-linux-x64
           path: target/release/vet-lsp
