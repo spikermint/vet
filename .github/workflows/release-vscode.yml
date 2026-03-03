@@ -135,7 +135,7 @@ jobs:
           cache-dependency-path: editors/vscode/package-lock.json
 
       - name: Download LSP binary
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: ${{ matrix.artifact }}
           path: editors/vscode/server
