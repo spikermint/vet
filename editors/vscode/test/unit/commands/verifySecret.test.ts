@@ -79,7 +79,7 @@ describe("createVerifySecretCommand", () => {
 	it("shows warning message for live secrets", async () => {
 		mockClient.executeCommand.mockResolvedValue({
 			status: "live",
-			service: { provider: "GitHub", details: "user: test" },
+			service: { provider: "GitHub", metadata: [{ label: "User", value: "test" }] },
 		});
 
 		createVerifySecretCommand(mockClient as never);
@@ -91,14 +91,14 @@ describe("createVerifySecretCommand", () => {
 		});
 
 		expect(window.showErrorMessage).toHaveBeenCalledWith(
-			"Secret is live: vcs/github-pat - user: test",
+			"Secret is live: vcs/github-pat - User: test",
 		);
 	});
 
 	it("shows info message for inactive secrets", async () => {
 		mockClient.executeCommand.mockResolvedValue({
 			status: "inactive",
-			service: { provider: "GitHub", details: "key revoked" },
+			service: { provider: "GitHub", metadata: [] },
 		});
 
 		createVerifySecretCommand(mockClient as never);
@@ -110,14 +110,14 @@ describe("createVerifySecretCommand", () => {
 		});
 
 		expect(window.showInformationMessage).toHaveBeenCalledWith(
-			"Secret is inactive: vcs/github-pat - key revoked",
+			"Secret is inactive: vcs/github-pat",
 		);
 	});
 
-	it("shows info message for inconclusive results with details", async () => {
+	it("shows info message for inconclusive results with metadata", async () => {
 		mockClient.executeCommand.mockResolvedValue({
 			status: "inconclusive",
-			service: { provider: "GitHub", details: "rate limited" },
+			service: { provider: "GitHub", metadata: [{ label: "Reason", value: "rate limited" }] },
 		});
 
 		createVerifySecretCommand(mockClient as never);
@@ -129,11 +129,11 @@ describe("createVerifySecretCommand", () => {
 		});
 
 		expect(window.showInformationMessage).toHaveBeenCalledWith(
-			"Verification inconclusive: vcs/github-pat - rate limited",
+			"Verification inconclusive: vcs/github-pat - Reason: rate limited",
 		);
 	});
 
-	it("shows info message for inconclusive results without details", async () => {
+	it("shows info message for inconclusive results without metadata", async () => {
 		mockClient.executeCommand.mockResolvedValue({
 			status: "inconclusive",
 		});

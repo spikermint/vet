@@ -17,7 +17,7 @@ interface VerificationResult {
 	status: "live" | "inactive" | "inconclusive";
 	service?: {
 		provider: string;
-		details: string;
+		metadata: Array<{ label: string; value: string }>;
 	};
 }
 
@@ -62,8 +62,10 @@ export function createVerifySecretCommand(client: VetClient): Disposable {
 				return;
 			}
 
-			const details = result.service?.details;
-			const detailSuffix = details ? ` - ${details}` : "";
+			const summary = result.service?.metadata
+				.map((m) => `${m.label}: ${m.value}`)
+				.join(", ");
+			const detailSuffix = summary ? ` - ${summary}` : "";
 
 			switch (result.status) {
 				case "live":
@@ -73,7 +75,7 @@ export function createVerifySecretCommand(client: VetClient): Disposable {
 					break;
 				case "inactive":
 					window.showInformationMessage(
-						`Secret is inactive: ${args.patternId}${detailSuffix}`,
+						`Secret is inactive: ${args.patternId}`,
 					);
 					break;
 				case "inconclusive":

@@ -66,14 +66,24 @@ impl std::fmt::Display for VerificationStatus {
     }
 }
 
+/// A single key-value pair of verification metadata.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ServiceMetadata {
+    /// The display label (e.g. `"User"`, `"Scopes"`).
+    pub label: Box<str>,
+    /// The value for this label.
+    pub value: Box<str>,
+}
+
 /// Metadata about the service that recognised a verified secret.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServiceInfo {
     /// The provider name (e.g. `"GitHub"`), if known.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub provider: Option<Box<str>>,
-    /// A human-readable summary of the verification outcome.
-    pub details: Box<str>,
+    /// Structured key-value pairs describing the verification outcome.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub metadata: Vec<ServiceMetadata>,
     /// A link to the provider's key management documentation, if available.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub documentation_url: Option<Box<str>>,
@@ -97,7 +107,7 @@ impl VerificationResult {
             status: VerificationStatus::Inactive,
             service: Some(ServiceInfo {
                 provider: Some(provider.into()),
-                details: "key is revoked or expired".into(),
+                metadata: vec![],
                 documentation_url: None,
             }),
             verified_at: current_timestamp(),
@@ -111,7 +121,10 @@ impl VerificationResult {
             status: VerificationStatus::Inconclusive,
             service: Some(ServiceInfo {
                 provider: None,
-                details: reason.into(),
+                metadata: vec![ServiceMetadata {
+                    label: "Reason".into(),
+                    value: reason.into(),
+                }],
                 documentation_url: None,
             }),
             verified_at: current_timestamp(),
@@ -152,7 +165,10 @@ mod tests {
     fn verification_result_live_has_service_info() {
         let result = VerificationResult::live(ServiceInfo {
             provider: Some("Test".into()),
-            details: "test details".into(),
+            metadata: vec![ServiceMetadata {
+                label: "User".into(),
+                value: "test".into(),
+            }],
             documentation_url: None,
         });
 
@@ -161,22 +177,24 @@ mod tests {
     }
 
     #[test]
-    fn verification_result_inactive_sets_default_details() {
+    fn verification_result_inactive_has_empty_metadata() {
         let result = VerificationResult::inactive("GitHub");
 
         assert_eq!(result.status, VerificationStatus::Inactive);
         let service = result.service.as_ref().unwrap();
         assert_eq!(service.provider.as_deref(), Some("GitHub"));
-        assert!(service.details.contains("revoked"));
+        assert!(service.metadata.is_empty());
     }
 
     #[test]
-    fn verification_result_inconclusive_has_no_provider() {
+    fn verification_result_inconclusive_has_reason_metadata() {
         let result = VerificationResult::inconclusive("rate limited");
 
         assert_eq!(result.status, VerificationStatus::Inconclusive);
         let service = result.service.as_ref().unwrap();
         assert!(service.provider.is_none());
-        assert!(service.details.contains("rate limited"));
+        assert_eq!(service.metadata.len(), 1);
+        assert_eq!(service.metadata[0].label.as_ref(), "Reason");
+        assert_eq!(service.metadata[0].value.as_ref(), "rate limited");
     }
 }

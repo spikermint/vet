@@ -221,6 +221,17 @@ fn write_context_line(
     )
 }
 
+fn format_metadata_summary(service: Option<&vet_providers::ServiceInfo>) -> String {
+    let Some(svc) = service else {
+        return String::new();
+    };
+    svc.metadata
+        .iter()
+        .map(|m| format!("{}: {}", m.label, m.value))
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
 fn write_verification_status(
     verification: Option<&vet_providers::VerificationResult>,
     writer: &mut dyn Write,
@@ -230,17 +241,16 @@ fn write_verification_status(
         return Ok(());
     };
 
-    let service = v.service.as_ref();
-    let details = service.map_or("", |s| s.details.as_ref());
+    let summary = format_metadata_summary(v.service.as_ref());
 
     writeln!(writer)?;
 
     match v.status {
         VerificationStatus::Live => {
-            let message = if details.is_empty() {
+            let message = if summary.is_empty() {
                 "secret is active".to_string()
             } else {
-                details.to_string()
+                summary
             };
             write_line(
                 writer,
@@ -254,29 +264,22 @@ fn write_verification_status(
                 strip_colors,
             )
         }
-        VerificationStatus::Inactive => {
-            let message = if details.is_empty() {
-                "key is revoked or expired".to_string()
-            } else {
-                details.to_string()
-            };
-            write_line(
-                writer,
-                format_args!(
-                    "  {} {} {} {}",
-                    colors::success().apply_to(indicators::SUCCESS),
-                    colors::success().apply_to("inactive"),
-                    colors::muted().apply_to("-"),
-                    colors::secondary().apply_to(message)
-                ),
-                strip_colors,
-            )
-        }
+        VerificationStatus::Inactive => write_line(
+            writer,
+            format_args!(
+                "  {} {} {} {}",
+                colors::success().apply_to(indicators::SUCCESS),
+                colors::success().apply_to("inactive"),
+                colors::muted().apply_to("-"),
+                colors::secondary().apply_to("key is revoked or expired")
+            ),
+            strip_colors,
+        ),
         VerificationStatus::Inconclusive => {
-            let message = if details.is_empty() {
-                "rate limited, try again later".to_string()
+            let message = if summary.is_empty() {
+                "could not determine, try again later".to_string()
             } else {
-                details.to_string()
+                summary
             };
             write_line(
                 writer,

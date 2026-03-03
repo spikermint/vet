@@ -13,7 +13,9 @@ mod verify;
 pub use pattern::{DetectionStrategy, Group, ParseSeverityError, PatternDef, Severity};
 pub use provider::Provider;
 pub use registry::ProviderRegistry;
-pub use verify::{SecretVerifier, ServiceInfo, VerificationError, VerificationResult, VerificationStatus};
+pub use verify::{
+    SecretVerifier, ServiceInfo, ServiceMetadata, VerificationError, VerificationResult, VerificationStatus,
+};
 
 /// HTTP `User-Agent` header sent during secret verification requests.
 pub(crate) const USER_AGENT: &str = concat!("vet-secret-scanner/", env!("CARGO_PKG_VERSION"));

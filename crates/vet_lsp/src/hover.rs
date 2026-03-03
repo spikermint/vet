@@ -3,8 +3,8 @@
 use serde::{Deserialize, Serialize};
 use tower_lsp::lsp_types::Range;
 use vet_core::prelude::*;
-use vet_core::protocol::{self, ExposureRisk, HoverData, RemediationInfo, VerificationInfo};
-use vet_providers::{VerificationResult, VerificationStatus};
+use vet_core::protocol::{self, ExposureRisk, HoverData, MetadataEntry, RemediationInfo, VerificationInfo};
+use vet_providers::VerificationResult;
 
 /// Response for the `vet/hoverData` custom LSP request.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -37,18 +37,23 @@ pub fn build_hover_data(
 fn to_verification_info(result: &VerificationResult) -> VerificationInfo {
     let service = result.service.as_ref();
     let provider = service.and_then(|s| s.provider.as_deref().map(String::from));
-    let details = service.map(|s| s.details.to_string()).filter(|d| !d.is_empty());
 
-    let reason = match result.status {
-        VerificationStatus::Inconclusive => details.clone(),
-        _ => None,
-    };
+    let metadata = service
+        .map(|s| {
+            s.metadata
+                .iter()
+                .map(|m| MetadataEntry {
+                    label: m.label.to_string(),
+                    value: m.value.to_string(),
+                })
+                .collect()
+        })
+        .unwrap_or_default();
 
     protocol::VerificationInfo {
         status: result.status,
         provider,
-        details,
-        reason,
+        metadata,
         verified_at: result.verified_at.to_string(),
     }
 }
@@ -161,16 +166,23 @@ mod tests {
         let pattern = make_pattern("test", "Test", "Desc", Severity::Critical);
         let result = VerificationResult::live(vet_providers::ServiceInfo {
             provider: Some("GitHub".into()),
-            details: "user: octocat".into(),
+            metadata: vec![vet_providers::ServiceMetadata {
+                label: "User".into(),
+                value: "octocat".into(),
+            }],
             documentation_url: None,
         });
         let data = build_hover_data(&pattern, ExposureRisk::Unknown, Some(&result));
 
         let verification = data.verification.unwrap();
-        assert_eq!(verification.status, VerificationStatus::Live);
+        assert_eq!(verification.status, vet_providers::VerificationStatus::Live);
         assert_eq!(verification.provider.as_deref(), Some("GitHub"));
-        assert_eq!(verification.details.as_deref(), Some("user: octocat"));
-        assert!(verification.reason.is_none());
+        assert!(
+            verification
+                .metadata
+                .iter()
+                .any(|m| m.label == "User" && m.value == "octocat")
+        );
     }
 
     #[test]
@@ -180,20 +192,25 @@ mod tests {
         let data = build_hover_data(&pattern, ExposureRisk::Unknown, Some(&result));
 
         let verification = data.verification.unwrap();
-        assert_eq!(verification.status, VerificationStatus::Inactive);
+        assert_eq!(verification.status, vet_providers::VerificationStatus::Inactive);
         assert_eq!(verification.provider.as_deref(), Some("GitHub"));
+        assert!(verification.metadata.is_empty());
     }
 
     #[test]
-    fn verified_inconclusive_has_reason() {
+    fn verified_inconclusive_has_reason_metadata() {
         let pattern = make_pattern("test", "Test", "Desc", Severity::Critical);
         let result = VerificationResult::inconclusive("rate limited");
         let data = build_hover_data(&pattern, ExposureRisk::Unknown, Some(&result));
 
         let verification = data.verification.unwrap();
-        assert_eq!(verification.status, VerificationStatus::Inconclusive);
-        assert!(verification.reason.is_some());
-        assert!(verification.reason.unwrap().contains("rate limited"));
+        assert_eq!(verification.status, vet_providers::VerificationStatus::Inconclusive);
+        assert!(
+            verification
+                .metadata
+                .iter()
+                .any(|m| m.label == "Reason" && m.value.contains("rate limited"))
+        );
     }
 
     #[test]
@@ -201,7 +218,16 @@ mod tests {
         let pattern = make_pattern("test", "Test", "Desc", Severity::Critical);
         let result = VerificationResult::live(vet_providers::ServiceInfo {
             provider: Some("GitHub".into()),
-            details: "user: octocat, scopes: repo".into(),
+            metadata: vec![
+                vet_providers::ServiceMetadata {
+                    label: "User".into(),
+                    value: "octocat".into(),
+                },
+                vet_providers::ServiceMetadata {
+                    label: "Scopes".into(),
+                    value: "repo".into(),
+                },
+            ],
             documentation_url: None,
         });
         let data = build_hover_data(&pattern, ExposureRisk::Unknown, Some(&result));
@@ -211,16 +237,29 @@ mod tests {
     }
 
     #[test]
-    fn verification_details_preserved() {
+    fn verification_metadata_preserved() {
         let result = VerificationResult::live(vet_providers::ServiceInfo {
             provider: Some("GitHub".into()),
-            details: "user: octocat, scopes: repo".into(),
+            metadata: vec![
+                vet_providers::ServiceMetadata {
+                    label: "User".into(),
+                    value: "octocat".into(),
+                },
+                vet_providers::ServiceMetadata {
+                    label: "Scopes".into(),
+                    value: "repo".into(),
+                },
+            ],
             documentation_url: None,
         });
         let pattern = make_pattern("test", "Test", "Desc", Severity::Critical);
         let data = build_hover_data(&pattern, ExposureRisk::Unknown, Some(&result));
 
         let verification = data.verification.unwrap();
-        assert_eq!(verification.details.as_deref(), Some("user: octocat, scopes: repo"));
+        assert_eq!(verification.metadata.len(), 2);
+        assert_eq!(verification.metadata[0].label, "User");
+        assert_eq!(verification.metadata[0].value, "octocat");
+        assert_eq!(verification.metadata[1].label, "Scopes");
+        assert_eq!(verification.metadata[1].value, "repo");
     }
 }
