@@ -23,12 +23,18 @@ struct JsonFinding {
 }
 
 #[derive(Serialize)]
+struct JsonMetadataEntry {
+    label: String,
+    value: String,
+}
+
+#[derive(Serialize)]
 struct JsonVerification {
     status: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     provider: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    details: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    metadata: Vec<JsonMetadataEntry>,
     #[serde(skip_serializing_if = "Option::is_none")]
     verified_at: Option<String>,
 }
@@ -42,7 +48,19 @@ fn to_json_finding(f: &Finding, verifications: Option<&VerificationMap>) -> Json
                 .service
                 .as_ref()
                 .and_then(|s| s.provider.as_ref().map(ToString::to_string)),
-            details: v.service.as_ref().map(|s| s.details.to_string()),
+            metadata: v
+                .service
+                .as_ref()
+                .map(|s| {
+                    s.metadata
+                        .iter()
+                        .map(|m| JsonMetadataEntry {
+                            label: m.label.to_string(),
+                            value: m.value.to_string(),
+                        })
+                        .collect()
+                })
+                .unwrap_or_default(),
             verified_at: Some(v.verified_at.to_string()),
         });
 

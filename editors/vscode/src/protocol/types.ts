@@ -15,8 +15,7 @@ export interface HoverData {
 export interface VerificationInfo {
 	status: VerificationStatus;
 	provider?: string;
-	details?: string;
-	reason?: string;
+	metadata: Array<{ label: string; value: string }>;
 	verifiedAt: string;
 }
 
@@ -43,6 +42,6 @@ export interface DiagnosticData {
 export interface DiagnosticVerification {
 	status: VerificationStatus;
 	provider?: string;
-	details?: string;
+	metadata: Array<{ label: string; value: string }>;
 	verifiedAt: string;
 }

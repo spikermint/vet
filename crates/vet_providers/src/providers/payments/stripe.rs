@@ -4,7 +4,7 @@ use crate::USER_AGENT;
 use crate::pattern;
 use crate::pattern::{Group, PatternDef, Severity};
 use crate::provider::Provider;
-use crate::verify::{BoxFuture, SecretVerifier, ServiceInfo, VerificationError, VerificationResult};
+use crate::verify::{BoxFuture, SecretVerifier, ServiceInfo, ServiceMetadata, VerificationError, VerificationResult};
 
 const STRIPE_API_URL: &str = "https://api.stripe.com/v1/charges";
 const DOCUMENTATION_URL: &str = "https://stripe.com/docs/keys#revoking-keys";
@@ -141,7 +141,16 @@ impl SecretVerifier for StripeVerifier {
 
                     Ok(VerificationResult::live(ServiceInfo {
                         provider: Some("Stripe".into()),
-                        details: format!("{mode}, {access}").into(),
+                        metadata: vec![
+                            ServiceMetadata {
+                                label: "Mode".into(),
+                                value: mode.into(),
+                            },
+                            ServiceMetadata {
+                                label: "Access".into(),
+                                value: access.into(),
+                            },
+                        ],
                         documentation_url: Some(DOCUMENTATION_URL.into()),
                     }))
                 }
@@ -155,7 +164,16 @@ impl SecretVerifier for StripeVerifier {
 
                     Ok(VerificationResult::live(ServiceInfo {
                         provider: Some("Stripe".into()),
-                        details: format!("{mode}, restricted key (insufficient permissions)").into(),
+                        metadata: vec![
+                            ServiceMetadata {
+                                label: "Mode".into(),
+                                value: mode.into(),
+                            },
+                            ServiceMetadata {
+                                label: "Note".into(),
+                                value: "restricted key, insufficient permissions".into(),
+                            },
+                        ],
                         documentation_url: Some(DOCUMENTATION_URL.into()),
                     }))
                 }

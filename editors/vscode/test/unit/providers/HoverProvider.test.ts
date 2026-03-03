@@ -77,7 +77,9 @@ describe("renderHoverMarkdown", () => {
 				verification: {
 					status: "live",
 					provider: "GitHub",
-					details: "user: octocat",
+					metadata: [
+						{ label: "User", value: "octocat" },
+					],
 					verifiedAt: new Date().toISOString(),
 				},
 			}),
@@ -86,7 +88,7 @@ describe("renderHoverMarkdown", () => {
 		expect(result.value).toContain("Live");
 		expect(result.value).toContain("$(circle-filled)");
 		expect(result.value).toContain("GitHub");
-		expect(result.value).toContain("user: octocat");
+		expect(result.value).toContain("**User** · octocat");
 	});
 
 	it("shows inactive verification status", () => {
@@ -95,6 +97,7 @@ describe("renderHoverMarkdown", () => {
 				verification: {
 					status: "inactive",
 					provider: "GitHub",
+					metadata: [],
 					verifiedAt: new Date().toISOString(),
 				},
 			}),
@@ -102,6 +105,7 @@ describe("renderHoverMarkdown", () => {
 
 		expect(result.value).toContain("Inactive");
 		expect(result.value).toContain("$(pass)");
+		expect(result.value).toContain("revoked or expired");
 	});
 
 	it("shows inconclusive verification status with reason", () => {
@@ -109,7 +113,9 @@ describe("renderHoverMarkdown", () => {
 			makeHoverData({
 				verification: {
 					status: "inconclusive",
-					reason: "rate limited",
+					metadata: [
+						{ label: "Reason", value: "rate limited" },
+					],
 					verifiedAt: new Date().toISOString(),
 				},
 			}),
@@ -177,6 +183,7 @@ describe("renderHoverMarkdown", () => {
 				verification: {
 					status: "live",
 					provider: "GitHub",
+					metadata: [],
 					verifiedAt: new Date().toISOString(),
 				},
 			}),

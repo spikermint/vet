@@ -48,6 +48,15 @@ pub struct HoverData {
     pub remediation: RemediationInfo,
 }
 
+/// A single key-value pair of verification metadata.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct MetadataEntry {
+    /// The display label (e.g. `"User"`, `"Scopes"`).
+    pub label: String,
+    /// The value for this label.
+    pub value: String,
+}
+
 /// Verification status of a detected secret.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -59,13 +68,9 @@ pub struct VerificationInfo {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub provider: Option<String>,
 
-    /// Additional details (e.g. "user: octocat, scopes: repo").
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub details: Option<String>,
-
-    /// Reason for inconclusive result (e.g. "rate limited").
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub reason: Option<String>,
+    /// Structured key-value pairs from the verification outcome.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub metadata: Vec<MetadataEntry>,
 
     /// ISO 8601 timestamp of when verification occurred.
     /// Extensions compute relative time ("2 min ago") client-side.
@@ -115,9 +120,9 @@ pub struct DiagnosticVerification {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub provider: Option<String>,
 
-    /// Additional details from the verification.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub details: Option<String>,
+    /// Structured key-value pairs from the verification outcome.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub metadata: Vec<MetadataEntry>,
 
     /// ISO 8601 timestamp of when verification occurred.
     pub verified_at: String,
@@ -171,8 +176,10 @@ mod tests {
             verification: Some(VerificationInfo {
                 status: VerificationStatus::Live,
                 provider: Some("GitHub".to_string()),
-                details: Some("user: octocat".to_string()),
-                reason: None,
+                metadata: vec![MetadataEntry {
+                    label: "User".to_string(),
+                    value: "octocat".to_string(),
+                }],
                 verified_at: "2025-01-01T00:00:00Z".to_string(),
             }),
             remediation: RemediationInfo {
@@ -195,7 +202,10 @@ mod tests {
             verification: Some(DiagnosticVerification {
                 status: VerificationStatus::Live,
                 provider: Some("GitHub".to_string()),
-                details: Some("user: test".to_string()),
+                metadata: vec![MetadataEntry {
+                    label: "User".to_string(),
+                    value: "test".to_string(),
+                }],
                 verified_at: "2025-01-01T00:00:00Z".to_string(),
             }),
         };

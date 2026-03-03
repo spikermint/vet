@@ -57,7 +57,7 @@ pub use error::{PatternError, VetError};
 pub use finding::{Confidence, Finding, FindingId, Secret, Span};
 pub use pattern::{DetectionStrategy, Group, Pattern, PatternRegistry, Severity};
 pub use protocol::{
-    DiagnosticData, DiagnosticVerification, ExposureRisk, HoverData, RemediationInfo, VerificationInfo,
+    DiagnosticData, DiagnosticVerification, ExposureRisk, HoverData, MetadataEntry, RemediationInfo, VerificationInfo,
 };
 pub use scanner::{Scanner, dedup_generic_findings};
 

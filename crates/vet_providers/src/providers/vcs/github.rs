@@ -4,7 +4,7 @@ use crate::USER_AGENT;
 use crate::pattern;
 use crate::pattern::{Group, PatternDef, Severity};
 use crate::provider::Provider;
-use crate::verify::{BoxFuture, SecretVerifier, ServiceInfo, VerificationError, VerificationResult};
+use crate::verify::{BoxFuture, SecretVerifier, ServiceInfo, ServiceMetadata, VerificationError, VerificationResult};
 
 const GITHUB_API_URL: &str = "https://api.github.com/user";
 const DOCUMENTATION_URL: &str =
@@ -134,23 +134,35 @@ impl SecretVerifier for GitHubVerifier {
                     let body: serde_json::Value = response.json().await?;
                     let login = body.get("login").and_then(|v| v.as_str());
 
-                    let details = match (login, &scopes) {
-                        (Some(user), Some(s)) if !s.is_empty() => format!("user: {user}, scopes: {s}"),
-                        (Some(user), _) => format!("user: {user}"),
-                        (None, Some(s)) if !s.is_empty() => format!("authenticated, scopes: {s}"),
-                        (None, _) => "authenticated (user info unavailable)".to_string(),
-                    };
+                    let mut metadata = Vec::new();
+                    if let Some(user) = login {
+                        metadata.push(ServiceMetadata {
+                            label: "User".into(),
+                            value: user.into(),
+                        });
+                    }
+                    if let Some(s) = &scopes {
+                        if !s.is_empty() {
+                            metadata.push(ServiceMetadata {
+                                label: "Scopes".into(),
+                                value: s.clone().into(),
+                            });
+                        }
+                    }
 
                     Ok(VerificationResult::live(ServiceInfo {
                         provider: Some("GitHub".into()),
-                        details: details.into(),
+                        metadata,
                         documentation_url: Some(DOCUMENTATION_URL.into()),
                     }))
                 }
                 401 => Ok(VerificationResult::inactive("GitHub")),
                 403 => Ok(VerificationResult::live(ServiceInfo {
                     provider: Some("GitHub".into()),
-                    details: "authenticated but rate-limited or blocked".into(),
+                    metadata: vec![ServiceMetadata {
+                        label: "Note".into(),
+                        value: "authenticated, insufficient permissions".into(),
+                    }],
                     documentation_url: Some(DOCUMENTATION_URL.into()),
                 })),
                 429 => {

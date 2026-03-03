@@ -88,7 +88,17 @@ fn build_diagnostic_data(
         protocol::DiagnosticVerification {
             status: cached.result.status,
             provider: service.and_then(|s| s.provider.as_deref().map(String::from)),
-            details: service.map(|s| s.details.to_string()),
+            metadata: service
+                .map(|s| {
+                    s.metadata
+                        .iter()
+                        .map(|m| protocol::MetadataEntry {
+                            label: m.label.to_string(),
+                            value: m.value.to_string(),
+                        })
+                        .collect()
+                })
+                .unwrap_or_default(),
             verified_at: cached.result.verified_at.to_string(),
         }
     });
@@ -103,38 +113,42 @@ fn build_diagnostic_data(
     serde_json::to_value(data).expect("DiagnosticData serialisation cannot fail")
 }
 
+fn format_metadata_summary(service: Option<&vet_providers::ServiceInfo>) -> String {
+    let Some(svc) = service else {
+        return String::new();
+    };
+    svc.metadata
+        .iter()
+        .map(|m| format!("{}: {}", m.label, m.value))
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
 fn format_verified_message(
     finding: &Finding,
     result: &vet_providers::VerificationResult,
 ) -> (DiagnosticSeverity, String) {
-    let service = result.service.as_ref();
-    let details = service.map_or("", |s| &s.details);
+    let summary = format_metadata_summary(result.service.as_ref());
+    let pattern_id = &finding.pattern_id;
 
     match result.status {
         VerificationStatus::Live => {
-            let pattern_id = &finding.pattern_id;
-            let message = if details.is_empty() {
+            let message = if summary.is_empty() {
                 format!("LIVE - {pattern_id}")
             } else {
-                format!("LIVE - {pattern_id} - {details}")
+                format!("LIVE - {pattern_id} - {summary}")
             };
             (DiagnosticSeverity::ERROR, message)
         }
         VerificationStatus::Inactive => {
-            let pattern_id = &finding.pattern_id;
-            let message = if details.is_empty() {
-                format!("Inactive - {pattern_id} - key is revoked or expired")
-            } else {
-                format!("Inactive - {pattern_id} - {details}")
-            };
+            let message = format!("Inactive - {pattern_id} - key is revoked or expired");
             (DiagnosticSeverity::WARNING, message)
         }
         VerificationStatus::Inconclusive => {
-            let pattern_id = &finding.pattern_id;
-            let message = if details.is_empty() {
-                format!("Inconclusive - {pattern_id} - rate limited, try again later")
+            let message = if summary.is_empty() {
+                format!("Inconclusive - {pattern_id} - could not determine, try again later")
             } else {
-                format!("Inconclusive - {pattern_id} - {details}")
+                format!("Inconclusive - {pattern_id} - {summary}")
             };
             (to_lsp_severity(finding.severity), message)
         }

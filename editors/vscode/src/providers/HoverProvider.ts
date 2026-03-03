@@ -131,54 +131,40 @@ function formatVerificationStatus(
 
 	switch (verification.status) {
 		case "live": {
-			const info = formatProviderInfo(
-				verification.provider,
-				verification.details,
-				"",
-			);
 			let out = `$(circle-filled) **<span style="color:${palette.danger};">Live</span>**`;
-			if (info) {
-				out += ` · <span style="color:${palette.muted};">${info}</span>`;
+			if (verification.provider) {
+				out += ` · <span style="color:${palette.muted};">${verification.provider}</span>`;
+			}
+			out += ` · <span style="color:${palette.muted};">${relativeTime}</span>`;
+
+			if (verification.metadata.length > 0) {
+				out += "\n";
+				for (const entry of verification.metadata) {
+					out += `\n**${entry.label}** · ${entry.value}`;
+				}
+			}
+			return out;
+		}
+		case "inactive": {
+			let out = `$(pass) **<span style="color:${palette.success};">Inactive</span>**`;
+			if (verification.provider) {
+				out += ` · <span style="color:${palette.muted};">${verification.provider} — revoked or expired</span>`;
 			}
 			out += ` · <span style="color:${palette.muted};">${relativeTime}</span>`;
 			return out;
 		}
-		case "inactive": {
-			const info = formatProviderInfo(
-				verification.provider,
-				verification.details,
-				"revoked or expired",
-			);
-			return (
-				`$(pass) **<span style="color:${palette.success};">Inactive</span>**` +
-				` · <span style="color:${palette.muted};">${info} · ${relativeTime}</span>`
-			);
-		}
 		case "inconclusive": {
+			const reasonEntry = verification.metadata.find(
+				(m) => m.label === "Reason",
+			);
 			const reason =
-				verification.reason ??
-				verification.details ??
-				"rate limited, try again later";
+				reasonEntry?.value ?? "could not determine, try again later";
 			return (
 				`$(question) **<span style="color:${palette.warning};">Inconclusive</span>**` +
 				` · <span style="color:${palette.muted};">${reason} · ${relativeTime}</span>`
 			);
 		}
 	}
-}
-
-function formatProviderInfo(
-	provider: string | undefined,
-	details: string | undefined,
-	fallback: string,
-): string {
-	if (provider && details) {
-		return `${provider} - ${details}`;
-	}
-	if (provider) {
-		return provider;
-	}
-	return fallback;
 }
 
 function formatRemediation(

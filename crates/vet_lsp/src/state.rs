@@ -396,7 +396,7 @@ mod tests {
     fn cached_verification_not_expired_when_fresh() {
         let result = VerificationResult::live(ServiceInfo {
             provider: Some("GitHub".into()),
-            details: "test".into(),
+            metadata: vec![],
             documentation_url: None,
         });
         let cached = CachedVerification::new(result);
