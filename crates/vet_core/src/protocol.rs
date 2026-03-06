@@ -69,7 +69,7 @@ pub struct VerificationInfo {
     pub provider: Option<String>,
 
     /// Structured key-value pairs from the verification outcome.
-    /// Always serialised (even when empty) so TypeScript consumers don't need optional chaining.
+    /// Always serialised (even when empty) so `TypeScript` consumers don't need optional chaining.
     #[serde(default)]
     pub metadata: Vec<MetadataEntry>,
 
@@ -122,7 +122,7 @@ pub struct DiagnosticVerification {
     pub provider: Option<String>,
 
     /// Structured key-value pairs from the verification outcome.
-    /// Always serialised (even when empty) so TypeScript consumers don't need optional chaining.
+    /// Always serialised (even when empty) so `TypeScript` consumers don't need optional chaining.
     #[serde(default)]
     pub metadata: Vec<MetadataEntry>,
 
