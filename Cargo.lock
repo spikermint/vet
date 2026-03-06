@@ -3995,7 +3995,7 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
 name = "vet_cli"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "anyhow",
  "assert_cmd",
@@ -4024,7 +4024,7 @@ dependencies = [
 
 [[package]]
 name = "vet_core"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "aho-corasick",
  "chrono",
@@ -4052,7 +4052,7 @@ dependencies = [
 
 [[package]]
 name = "vet_lsp"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "chrono",
  "gix",
@@ -4073,7 +4073,7 @@ dependencies = [
 
 [[package]]
 name = "vet_providers"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "chrono",
  "regex",
