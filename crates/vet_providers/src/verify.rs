@@ -82,7 +82,8 @@ pub struct ServiceInfo {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub provider: Option<Box<str>>,
     /// Structured key-value pairs describing the verification outcome.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    /// Always serialised (even when empty) so TypeScript consumers don't need optional chaining.
+    #[serde(default)]
     pub metadata: Vec<ServiceMetadata>,
     /// A link to the provider's key management documentation, if available.
     #[serde(skip_serializing_if = "Option::is_none")]

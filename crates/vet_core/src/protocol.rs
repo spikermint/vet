@@ -69,7 +69,8 @@ pub struct VerificationInfo {
     pub provider: Option<String>,
 
     /// Structured key-value pairs from the verification outcome.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    /// Always serialised (even when empty) so TypeScript consumers don't need optional chaining.
+    #[serde(default)]
     pub metadata: Vec<MetadataEntry>,
 
     /// ISO 8601 timestamp of when verification occurred.
@@ -121,7 +122,8 @@ pub struct DiagnosticVerification {
     pub provider: Option<String>,
 
     /// Structured key-value pairs from the verification outcome.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    /// Always serialised (even when empty) so TypeScript consumers don't need optional chaining.
+    #[serde(default)]
     pub metadata: Vec<MetadataEntry>,
 
     /// ISO 8601 timestamp of when verification occurred.
