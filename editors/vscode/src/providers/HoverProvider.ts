@@ -148,7 +148,7 @@ function formatVerificationStatus(
 		case "inactive": {
 			let out = `$(pass) **<span style="color:${palette.success};">Inactive</span>**`;
 			if (verification.provider) {
-				out += ` · <span style="color:${palette.muted};">${verification.provider} — revoked or expired</span>`;
+				out += ` · <span style="color:${palette.muted};">${verification.provider} - revoked or expired</span>`;
 			}
 			out += ` · <span style="color:${palette.muted};">${relativeTime}</span>`;
 			return out;
