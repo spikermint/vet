@@ -52,7 +52,7 @@ const COLOR_PALETTES: Record<
 };
 
 export class VetHoverProvider {
-	constructor(private readonly client: VetClient) { }
+	constructor(private readonly client: VetClient) {}
 
 	async provideHover(
 		document: TextDocument,
